@@ -1,0 +1,104 @@
+<NoteCard>:
+    orientation: "vertical"
+    padding: "16dp"
+    spacing: "6dp"
+    size_hint_y: None
+    height: "100dp"
+    radius: [20, 20, 20, 20]
+    ripple_behavior: True
+    elevation: 1
+    md_bg_color: 0.99, 0.97, 0.95, 1
+
+    MDLabel:
+        text: root.title
+        font_style: "Title"
+        role: "medium"
+        adaptive_height: True
+        shorten: True
+        shorten_from: "right"
+        theme_text_color: "Custom"
+        text_color: 0.36, 0.28, 0.22, 1
+
+    MDLabel:
+        text: root.preview
+        font_style: "Body"
+        role: "small"
+        shorten: True
+        shorten_from: "right"
+        theme_text_color: "Custom"
+        text_color: 0.56, 0.46, 0.40, 1
+
+
+<HomeScreen>:
+    name: "home"
+    md_bg_color: 0.96, 0.94, 0.90, 1
+
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 0.96, 0.94, 0.90, 1
+
+        MDTopAppBar:
+            title: "NoteNest"
+            elevation: 0
+            md_bg_color: 0.49, 0.62, 0.48, 1
+            specific_text_color: 1, 1, 1, 1
+            right_action_items:
+                [["sort-alphabetical-ascending", lambda x: app.root.get_screen('home').sort_notes('title'), "Sort A-Z"], ["sort-calendar-ascending", lambda x: app.root.get_screen('home').sort_notes('date'), "Sort by date"]]
+
+        MDTextField:
+            id: search_field
+            size_hint_x: 0.92
+            pos_hint: {"center_x": 0.5}
+            on_text: app.root.get_screen('home').search_notes(self.text)
+
+            MDTextFieldHintText:
+                text: "Search notes..."
+
+        ScrollView:
+            MDList:
+                id: notes_list
+                padding: "12dp"
+                spacing: "10dp"
+                md_bg_color: 0.96, 0.94, 0.90, 1
+
+    MDFabButton:
+        icon: "plus"
+        pos_hint: {"right": 0.93, "y": 0.04}
+        md_bg_color: 0.79, 0.54, 0.49, 1
+        theme_icon_color: "Custom"
+        icon_color: 1, 1, 1, 1
+        on_release: app.root.get_screen('home').open_note_editor()
+
+
+<NoteEditorScreen>:
+    name: "note_editor"
+    md_bg_color: 0.96, 0.94, 0.90, 1
+
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 0.96, 0.94, 0.90, 1
+
+        MDTopAppBar:
+            title: "My Note"
+            elevation: 0
+            md_bg_color: 0.49, 0.62, 0.48, 1
+            specific_text_color: 1, 1, 1, 1
+            left_action_items: [["arrow-left", lambda x: app.root.get_screen('note_editor').go_back()]]
+            right_action_items: [["content-copy", lambda x: app.root.get_screen('note_editor').duplicate_note(), "Duplicate"], ["delete", lambda x: app.root.get_screen('note_editor').delete_note(), "Delete"], ["content-save", lambda x: app.root.get_screen('note_editor').save_note(), "Save"]]
+
+        MDTextField:
+            id: title_field
+            size_hint_x: 0.92
+            pos_hint: {"center_x": 0.5}
+
+            MDTextFieldHintText:
+                text: "Title"
+
+        MDTextField:
+            id: content_field
+            multiline: True
+            size_hint: 0.92, 1
+            pos_hint: {"center_x": 0.5}
+
+            MDTextFieldHintText:
+                text: "Start writing..."
