@@ -1,14 +1,14 @@
 from database.db import get_connection
 
-def create_notes(notebook_id,title,content):
-   conn=get_connection()
-   cursor=conn.cursor()  
-   cursor.execute('''
-      INSERT INTO notes(notebook_id,title,content)
-      VALUES(?,?,?)       
-    ''',(notebook_id,title,content))
-   conn.commit()
-   conn.close()
+def create_notes(notebook_id, title, content, category_id=None, is_pinned=0, is_archived=0):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO notes (notebook_id, title, content, category_id, is_pinned, is_archived)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (notebook_id, title, content, category_id, is_pinned, is_archived))
+    conn.commit()
+    conn.close()
 def get_all_notes(notebook_id):
     conn=get_connection()
     cursor=conn.cursor()
@@ -97,7 +97,8 @@ def duplicate_notes(note_id):
     notebook_id=og_note[1]
     title=og_note[2]
     content=og_note[3]
+    category_id = og_note[8]
     
-    create_notes(notebook_id,title,content)
+    create_notes(notebook_id,title,content,category_id=category_id)
     
     
