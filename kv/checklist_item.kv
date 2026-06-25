@@ -1,0 +1,44 @@
+#:kivy 2.0
+
+<ChecklistItem>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: 56
+    padding: [12, 8, 12, 8]
+    spacing: 12
+    canvas.before:
+        Color:
+            rgba: (0.98, 0.95, 0.90, 1) if not self.checked else (0.92, 0.84, 0.66, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [12,]
+
+    # Checkbox circle
+    Widget:
+        size_hint: None, None
+        size: 28, 28
+        pos_hint: {"center_y": 0.5}
+        canvas:
+            Color:
+                rgba: (0.54, 0.35, 0.17, 1) if root.checked else (0, 0, 0, 0)
+            Ellipse:
+                pos: self.pos
+                size: self.size
+            Color:
+                rgba: (0.54, 0.35, 0.17, 1)
+            Line:
+                ellipse: self.x, self.y, self.width, self.height
+                width: 1.8
+        on_touch_down:
+            if self.collide_point(*args[1].pos): root.toggle()
+
+    # Task text
+    Label:
+        text: root.get_label_text()
+        markup: True
+        color: (0.29, 0.20, 0.15, 1) if not root.checked else (0.60, 0.50, 0.40, 1)
+        font_size: 15
+        halign: "left"
+        valign: "middle"
+        text_size: self.size
