@@ -1,0 +1,186 @@
+# ── NoteCard ──────────────────────────────────────────────────
+<NoteCard>:
+    orientation: "vertical"
+    padding: "16dp"
+    spacing: "6dp"
+    size_hint_y: None
+    height: "100dp"
+    radius: [16, 16, 16, 16]
+    ripple_behavior: True
+    elevation: 2
+    md_bg_color: 0.97, 0.95, 0.90, 1
+
+    MDLabel:
+        text: root.title
+        font_style: "Title"
+        role: "medium"
+        adaptive_height: True
+        shorten: True
+        shorten_from: "right"
+        theme_text_color: "Custom"
+        text_color: 0.29, 0.20, 0.15, 1
+
+    MDLabel:
+        text: root.preview
+        font_style: "Body"
+        role: "small"
+        adaptive_height: True
+        shorten: True
+        shorten_from: "right"
+        theme_text_color: "Custom"
+        text_color: 0.54, 0.35, 0.17, 1
+
+
+# ── HomeScreen ────────────────────────────────────────────────
+<HomeScreen>:
+    name: "home"
+    md_bg_color: 0.97, 0.95, 0.90, 1
+
+    FloatLayout:
+
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint: 1, 1
+            md_bg_color: 0.97, 0.95, 0.90, 1
+
+            # custom toolbar
+            MDBoxLayout:
+                size_hint_y: None
+                height: "56dp"
+                padding: "8dp", "4dp"
+                spacing: "4dp"
+                md_bg_color: 0.92, 0.84, 0.66, 1
+
+                MDLabel:
+                    text: "NoteNest"
+                    font_style: "Title"
+                    role: "large"
+                    theme_text_color: "Custom"
+                    text_color: 0.29, 0.20, 0.15, 1
+                    size_hint_x: 1
+
+                MDIconButton:
+                    icon: "sort-alphabetical-ascending"
+                    theme_icon_color: "Custom"
+                    icon_color: 0.29, 0.20, 0.15, 1
+                    on_release: app.root.get_screen('home').sort_notes('title')
+
+                MDIconButton:
+                    icon: "sort-calendar-ascending"
+                    theme_icon_color: "Custom"
+                    icon_color: 0.29, 0.20, 0.15, 1
+                    on_release: app.root.get_screen('home').sort_notes('date')
+
+            MDBoxLayout:
+                size_hint_y: None
+                height: "72dp"
+                padding: "16dp", "8dp"
+                md_bg_color: 0.97, 0.95, 0.90, 1
+
+                MDTextField:
+                    id: search_field
+                    on_text: app.root.get_screen('home').search_notes(self.text)
+
+                    MDTextFieldHintText:
+                        text: "Search notes..."
+
+            ScrollView:
+                size_hint: 1, 1
+
+                MDBoxLayout:
+                    id: notes_list
+                    orientation: "vertical"
+                    padding: "12dp"
+                    spacing: "10dp"
+                    adaptive_height: True
+                    md_bg_color: 0.97, 0.95, 0.90, 1
+
+        MDFabButton:
+            icon: "plus"
+            pos_hint: {"right": 0.93, "y": 0.04}
+            md_bg_color: 0.72, 0.79, 0.54, 1
+            theme_icon_color: "Custom"
+            icon_color: 0.29, 0.20, 0.15, 1
+            on_release: app.root.get_screen('home').open_note_editor()
+
+
+# ── NoteEditorScreen ──────────────────────────────────────────
+<NoteEditorScreen>:
+    name: "note_editor"
+    md_bg_color: 0.97, 0.95, 0.90, 1
+
+    MDBoxLayout:
+        orientation: "vertical"
+        size_hint: 1, 1
+        md_bg_color: 0.97, 0.95, 0.90, 1
+
+        # custom toolbar with explicit icon colors
+        MDBoxLayout:
+            size_hint_y: None
+            height: "56dp"
+            padding: "4dp"
+            spacing: "4dp"
+            md_bg_color: 0.92, 0.84, 0.66, 1
+
+            MDIconButton:
+                icon: "arrow-left"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                on_release: app.root.get_screen('note_editor').go_back()
+
+            MDLabel:
+                text: "My Note"
+                font_style: "Title"
+                role: "large"
+                theme_text_color: "Custom"
+                text_color: 0.29, 0.20, 0.15, 1
+                size_hint_x: 1
+
+            MDIconButton:
+                icon: "content-copy"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                on_release: app.root.get_screen('note_editor').duplicate_note()
+
+            MDIconButton:
+                icon: "delete"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                on_release: app.root.get_screen('note_editor').delete_note()
+
+            MDIconButton:
+                icon: "content-save"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                on_release: app.root.get_screen('note_editor').save_note()
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: "72dp"
+            padding: "16dp", "8dp"
+            md_bg_color: 0.97, 0.95, 0.90, 1
+
+            MDTextField:
+                id: title_field
+
+                MDTextFieldHintText:
+                    text: "Title"
+
+        ScrollView:
+            size_hint: 1, 1
+
+            MDBoxLayout:
+                padding: "16dp", "8dp"
+                size_hint_y: None
+                height: self.minimum_height
+                md_bg_color: 0.97, 0.95, 0.90, 1
+
+                MDTextField:
+                    id: content_field
+                    multiline: True
+                    size_hint_y: None
+                    height: max(self.minimum_height, dp(400))
+
+                    MDTextFieldHintText:
+                        text: "Start writing..."
+
