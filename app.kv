@@ -104,39 +104,49 @@
             size_hint: 1, 1
             md_bg_color: 0.97, 0.95, 0.90, 1
 
-            # custom toolbar
-            MDBoxLayout:
+            # custom toolbar — MDFloatLayout lets the title truly center
+            # on the bar itself, regardless of how many icons sit on each side
+            MDFloatLayout:
                 size_hint_y: None
                 height: "56dp"
-                padding: "8dp", "4dp"
-                spacing: "4dp"
                 md_bg_color: 0.92, 0.84, 0.66, 1
 
                 MDIconButton:
                     icon: "arrow-left"
                     theme_icon_color: "Custom"
                     icon_color: 0.29, 0.20, 0.15, 1
+                    pos_hint: {"x": 0, "center_y": 0.5}
                     on_release: root.go_home()
 
                 MDLabel:
-                    text: "NoteNest"
+                    text: "Notes"
                     font_style: "Title"
                     role: "large"
                     theme_text_color: "Custom"
                     text_color: 0.29, 0.20, 0.15, 1
-                    size_hint_x: 1
+                    halign: "center"
+                    valign: "middle"
+                    text_size: self.size
+                    size_hint: 1, 1
+                    pos_hint: {"x": 0, "y": 0}
 
-                MDIconButton:
-                    icon: "sort-alphabetical-ascending"
-                    theme_icon_color: "Custom"
-                    icon_color: 0.29, 0.20, 0.15, 1
-                    on_release: root.sort_notes('title')
+                MDBoxLayout:
+                    size_hint: None, None
+                    size: "88dp", "48dp"
+                    spacing: "4dp"
+                    pos_hint: {"right": 1, "center_y": 0.5}
 
-                MDIconButton:
-                    icon: "sort-calendar-ascending"
-                    theme_icon_color: "Custom"
-                    icon_color: 0.29, 0.20, 0.15, 1
-                    on_release: root.sort_notes('date')
+                    MDIconButton:
+                        icon: "sort-alphabetical-ascending"
+                        theme_icon_color: "Custom"
+                        icon_color: 0.29, 0.20, 0.15, 1
+                        on_release: root.sort_notes('title')
+
+                    MDIconButton:
+                        icon: "sort-calendar-ascending"
+                        theme_icon_color: "Custom"
+                        icon_color: 0.29, 0.20, 0.15, 1
+                        on_release: root.sort_notes('date')
 
             MDBoxLayout:
                 size_hint_y: None
