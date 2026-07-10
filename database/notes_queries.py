@@ -8,6 +8,7 @@ def create_notes(notebook_id, title, content, category_id=None, is_pinned=0, is_
         VALUES (?, ?, ?, ?, ?, ?)
     ''', (notebook_id, title, content, category_id, is_pinned, is_archived))
     note_id=cursor.lastrowid
+    conn.commit()
     conn.close()
     return note_id
 def get_all_notes(notebook_id):
