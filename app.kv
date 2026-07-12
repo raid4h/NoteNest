@@ -1,15 +1,46 @@
 <DashboardTile>:
-    size_hint: None, None
-    size: dp(150), dp(150)
-    radius: [16]
+    size_hint_x: 1
+    size_hint_y: None
+    height: dp(105)
+    radius: [18]
+    ripple_behavior: True
+    elevation: 1
 
-    MDLabel:
-        id: tile_label                 # referenced in DashboardTile.apply_theme()
-        text: root.label
-        halign: "center"
-        theme_text_color: "Custom"     # required, or text_color below is ignored
-        text_color: 0, 0, 0, 1         # placeholder — overwritten by apply_theme()
+    MDBoxLayout:
+        orientation: "horizontal"
+        padding: dp(18), dp(12)
+        spacing: dp(12)
 
+        MDBoxLayout:
+            orientation: "vertical"
+            spacing: dp(4)
+
+            MDLabel:
+                id: tile_label
+                text: root.label
+                halign: "left"
+                theme_text_color: "Custom"
+                font_style: "Title"
+                role: "medium"
+                adaptive_height: True
+
+            MDLabel:
+                id: tile_subtitle
+                text: root.subtitle
+                halign: "left"
+                theme_text_color: "Custom"
+                font_style: "Body"
+                role: "small"
+                adaptive_height: True
+
+        MDIconButton:
+            id: tile_icon
+            icon: root.icon_name
+            theme_icon_color: "Custom"
+            size_hint: None, None
+            size: dp(54), dp(54)
+            pos_hint: {"center_y": 0.5}
+            on_release: root.on_release()
 <HomeScreen>:
     MDBoxLayout:
         id: drawer_layout
@@ -24,41 +55,71 @@
             MDIconButton:
                 id: menu_button
                 icon: "cog-outline"
-                theme_icon_color: "Custom"   # required, or icon_color is ignored
+                theme_icon_color: "Custom"
                 on_release: root.open_settings()
 
             MDLabel:
                 id: drawer_title
                 text: "NoteNest"
                 theme_text_color: "Custom"
+                font_style: "Title"
+                role: "medium"
 
-        MDLabel:
-            id: home_label
-            text: "Welcome back"
-            halign: "center"
-            theme_text_color: "Custom"
-            size_hint_y: None
-            height: dp(40)
+        AnchorLayout:
+            anchor_x: "center"
+            anchor_y: "top"
+            padding: dp(24), dp(35), dp(24), dp(24)
 
-        # ── the tile grid — HomeScreen.apply_theme() loops over these ──
-        MDBoxLayout:
-            id: tiles_row
-            spacing: dp(20)
-            padding: dp(20)
-            adaptive_height: True
-            pos_hint: {"center_x": 0.5}
+            MDBoxLayout:
+                orientation: "vertical"
+                spacing: dp(14)
+                size_hint: None, None
+                width: root.width - dp(48) if root.width < dp(500) else dp(430)
+                height: self.minimum_height
 
-            DashboardTile:
-                label: "Notes"
-                target_screen: "notes"
+                MDLabel:
+                    id: home_label
+                    text: "Let’s get you started for the day"
+                    halign: "center"
+                    theme_text_color: "Custom"
+                    font_style: "Title"
+                    role: "large"
+                    size_hint_y: None
+                    height: dp(48)
 
-            DashboardTile:
-                label: "Pomodoro"
-                target_screen: "timer"
+                MDLabel:
+                    id: home_subtitle
+                    text: "Pick a space to write, focus, or plan your tasks."
+                    halign: "center"
+                    theme_text_color: "Custom"
+                    font_style: "Body"
+                    role: "medium"
+                    size_hint_y: None
+                    height: dp(42)
 
-            DashboardTile:
-                label: "Reminders"
-                target_screen: "calendar"
+                MDBoxLayout:
+                    id: tiles_row
+                    orientation: "vertical"
+                    spacing: dp(14)
+                    adaptive_height: True
+
+                    DashboardTile:
+                        label: "Notes"
+                        subtitle: "Write and organize your ideas"
+                        icon_name: "notebook-outline"
+                        target_screen: "notes"
+
+                    DashboardTile:
+                        label: "Pomodoro"
+                        subtitle: "Focus with timed study sessions"
+                        icon_name: "timer-sand"
+                        target_screen: "timer"
+
+                    DashboardTile:
+                        label: "Tasks & Calendar"
+                        subtitle: "Track deadlines, priorities, and reminders"
+                        icon_name: "calendar-check-outline"
+                        target_screen: "calendar"
 
 # ── NoteCard ──────────────────────────────────────────────────
 <NoteCard>:

@@ -35,7 +35,7 @@ class TestApp(App):
 
         scroll = ScrollView()
         scroll.add_widget(layout)
-        return scroll
+        return scroll1
 
 
 TestApp().run()

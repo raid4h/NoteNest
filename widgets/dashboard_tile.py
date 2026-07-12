@@ -1,43 +1,50 @@
-# widgets/dashboard_tile.py
-# One square feature tile on the home dashboard (Notes / Pomodoro / Reminders).
-# Handles its own tap detection (same pattern as widgets/note_card.py) and
-# its own theme coloring, since HomeScreen just loops over tiles generically.
-
-from kivymd.uix.card import MDCard
 from kivy.properties import StringProperty
+from kivy.uix.behaviors import ButtonBehavior
+from kivymd.uix.card import MDCard
+from kivymd.app import MDApp
 
 from theme.theme_manager import theme_manager
-from theme.palettes import CARD_PRIMARY, TEXT_PRIMARY
+from theme.palettes import CARD_PRIMARY, TEXT_PRIMARY, TEXT_SECONDARY, BUTTON
 
 
 class DashboardTile(MDCard):
-    label = StringProperty("")           # text shown on the tile, e.g. "Notes"
-    target_screen = StringProperty("")   # ScreenManager name to switch to on tap
+    """
+    One clickable card on the Home Screen.
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.bind(on_kv_post=lambda *x: self.apply_theme())
+    Example:
+    Notes card -> opens Notes screen
+    Pomodoro card -> opens Timer screen
+    Tasks & Calendar card -> opens Calendar screen
+    """
 
-    # ─── colors this tile and its label ───
+    label = StringProperty("")
+    subtitle = StringProperty("")
+    icon_name = StringProperty("note-outline")
+    target_screen = StringProperty("")
+
+    def on_release(self):
+        """
+        Runs when the card is clicked.
+        It changes the screen.
+        """
+
+        app = MDApp.get_running_app()
+
+        if app and app.root and self.target_screen:
+            app.root.current = self.target_screen
+
     def apply_theme(self):
+        """
+        Apply NoteNest theme colors to this card.
+        """
+
         self.md_bg_color = theme_manager.get_color(CARD_PRIMARY)
-        # tile_label is the id given to the MDLabel inside <DashboardTile> in app.kv
+
         if "tile_label" in self.ids:
             self.ids.tile_label.text_color = theme_manager.get_color(TEXT_PRIMARY)
 
-    # ─── tap detection — MDCard doesn't reliably fire on_release when
-    #     nested in some layouts, so track touch start/end manually,
-    #     exactly like NoteCard does ───
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
-            self._touch_mine = True
-        return super().on_touch_down(touch)
+        if "tile_subtitle" in self.ids:
+            self.ids.tile_subtitle.text_color = theme_manager.get_color(TEXT_SECONDARY)
 
-    def on_touch_up(self, touch):
-        if self.collide_point(*touch.pos) and getattr(self, '_touch_mine', False):
-            self._touch_mine = False
-            from kivymd.app import MDApp
-            MDApp.get_running_app().root.current = self.target_screen
-            return True
-        self._touch_mine = False
-        return super().on_touch_up(touch)
+        if "tile_icon" in self.ids:
+            self.ids.tile_icon.icon_color = theme_manager.get_color(BUTTON)
