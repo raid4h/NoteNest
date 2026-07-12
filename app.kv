@@ -240,6 +240,12 @@
                 on_release: app.root.get_screen('note_editor').pick_image()
 
             MDIconButton:
+                icon: "eye-outline"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                on_release: app.root.get_screen('note_editor').toggle_preview()
+
+            MDIconButton:
                 icon: "content-copy"
                 theme_icon_color: "Custom"
                 icon_color: 0.29, 0.20, 0.15, 1
@@ -269,28 +275,6 @@
                 MDTextFieldHintText:
                     text: "Title"
 
-        # ── photo previews — height is set to 0 in Python when there are
-        #    no attachments, instead of always leaving an empty gap here ──
-        ScrollView:
-            id: attachments_scroll
-            size_hint_y: None
-            height: 0
-            do_scroll_x: True
-            do_scroll_y: False
-
-            MDBoxLayout:
-                id: attachments_row
-                orientation: "horizontal"
-                spacing: "8dp"
-                padding: "16dp", "8dp"
-                adaptive_width: True
-                size_hint_y: None
-                height: "72dp"
-
-        # ── note content — the ONLY flexible-height element in this
-        #    screen, so it naturally fills whatever space is left.
-        #    No ScrollView wrapper needed: multiline fields already
-        #    scroll their own overflow internally. ──
         MDCard:
             orientation: "vertical"
             size_hint: 1, 1
@@ -299,11 +283,20 @@
             elevation: 1
             md_bg_color: 1, 0.98, 0.93, 1
 
-            MDTextField:
-                id: content_field
-                multiline: True
+            MDBoxLayout:
+                id: content_container
+                orientation: "vertical"
                 size_hint: 1, 1
-                font_size: "16sp"
 
-                MDTextFieldHintText:
-                    text: "Start writing..."
+                # edit mode: plain text, image markers visible as text
+                MDTextField:
+                    id: content_field
+                    multiline: True
+                    size_hint: 1, 1
+                    pos_hint: {"x": 0, "y": 0}
+                    font_size: "16sp"
+
+                    MDTextFieldHintText:
+                        text: "Start writing..."
+
+                

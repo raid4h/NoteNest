@@ -1,46 +1,53 @@
 # screens/note_editor_screen.py
 import os
-from kivymd.uix.screen import MDScreen
-from kivy.clock import Clock                              
-from plyer import filechooser
-from widgets.attachment_thumbnail import AttachmentThumbnail
+import re
+from kivy.clock import Clock
 from kivy.metrics import dp
-
-# Registers AttachmentThumbnail with Kivy's Factory, same reason as the
-# DashboardTile import earlier — without this, app.kv can't build
-# <AttachmentThumbnail>, and you'd get "Unknown class" again.
-from widgets.attachment_thumbnail import AttachmentThumbnail
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivymd.uix.screen import MDScreen
+from plyer import filechooser
 
 from database.notes_queries import (
-    get_notes_by_id,
-    create_notes,
-    update_notes,
-    delete_notes,
-    duplicate_notes,
+    get_notes_by_id, create_notes, update_notes, delete_notes, duplicate_notes,
 )
-from database.attachment_queries import (
-    create_attachment,
-    get_all_attachments,   # matches Tabshira's actual function name
-    delete_attachment,
-)
+from database.attachment_queries import create_attachment
 
 DEFAULT_NOTEBOOK_ID = 1
+
+# Matches an inline image marker in note content, e.g.
+# {{img:C:/Users/raida/Pictures/photo.jpg}}
+IMAGE_TOKEN_PATTERN = re.compile(r"\{\{img:(.*?)\}\}")
 
 
 class NoteEditorScreen(MDScreen):
     current_note_id = None
+    is_preview = False
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Attachments for the note currently open. Each entry:
-        # {"id": <db id, or None if not saved yet>, "path": "local/file.jpg"}
-        self.attachments = []
+        # Built once here in Python, NOT in KV. This lets us fully add/remove
+        # these from the screen when toggling preview, instead of just hiding
+        # them with opacity -- which is what caused typing to break, since
+        # ScrollView keeps intercepting touches even when "disabled".
+        self._preview_content = BoxLayout(
+            orientation="vertical", size_hint_y=None, spacing=dp(8)
+        )
+        self._preview_content.bind(minimum_height=self._preview_content.setter("height"))
+
+        self._preview_scroll = ScrollView(size_hint=(1, 1), do_scroll_x=False)
+        self._preview_scroll.add_widget(self._preview_content)
 
     def on_enter(self):
-        self.attachments = []
+        self.is_preview = False
         if self.current_note_id is not None:
             self.load_note(self.current_note_id)
-        self.refresh_attachment_previews()
+        else:
+            self.ids.title_field.text = ""
+            self.ids.content_field.text = ""
+        self.show_edit_mode()
 
     def load_note(self, note_id):
         note = get_notes_by_id(note_id)
@@ -48,28 +55,23 @@ class NoteEditorScreen(MDScreen):
             self.ids.title_field.text = ""
             self.ids.content_field.text = ""
             return
-
         self.ids.title_field.text = note[2]
         self.ids.content_field.text = note[3] or ""
 
-        # attachments table shape from db.py: (id, note_id, file_path, created_at)
-        rows = get_all_attachments(note_id)
-        self.attachments = [{"id": row[0], "path": row[2]} for row in rows]
-
-    # ─── opens the native file picker, filtered to image files ───
+    # ─── image picking ───
     def pick_image(self):
         if self.current_note_id is None:
-            # No note_id yet for a brand-new, unsaved note -- nowhere to
-            # attach the photo to in the database. Save the note first.
-            print("Save the note before attaching photos")
-            # Week 4: replace with a real popup/snackbar instead of print
-            return
+            # Now that create_notes() returns a real id, save the note on
+            # the spot instead of blocking the user with an error message.
+            title = self.ids.title_field.text.strip() or "Untitled"
+            content = self.ids.content_field.text
+            self.current_note_id = create_notes(DEFAULT_NOTEBOOK_ID, title, content)
+            if not self.ids.title_field.text.strip():
+                self.ids.title_field.text = title
 
-        # Windows' native file dialog silently changes the app's working
-        # directory to match whatever folder you picked a file from. Since
-        # the database connects with a relative path, that breaks every
-        # query made afterward. Save the current directory here, then
-        # restore it once the picker closes.
+        # Windows' native file dialog silently changes the working directory
+        # to match wherever you picked a file from, which breaks the
+        # database's relative path. Save it here, restore it right after.
         self._cwd_before_picker = os.getcwd()
 
         filechooser.open_file(
@@ -78,38 +80,80 @@ class NoteEditorScreen(MDScreen):
         )
 
     def on_image_selected(self, selection):
-        # The file picker's callback can fire on a different thread than
-        # the rest of the app (especially on Windows). Touching widgets
-        # directly here can silently crash the whole app -- so instead,
-        # schedule the actual work to run on Kivy's main thread.
-        os.chdir(self._cwd_before_picker)   # undo Windows' directory change
-        Clock.schedule_once(lambda dt: self._add_attachment(selection))
+        os.chdir(self._cwd_before_picker)
+        # The picker callback can run on a different thread; schedule the
+        # actual widget update on Kivy's main thread instead.
+        Clock.schedule_once(lambda dt: self._insert_image_token(selection))
 
-    def _add_attachment(self, selection):
+    def _insert_image_token(self, selection):
         if not selection:
-            return  # user cancelled the picker
-        self.attachments.append({"id": None, "path": selection[0]})
-        self.refresh_attachment_previews()
+            return
+        file_path = selection[0]
+        create_attachment(self.current_note_id, file_path)
 
-    # ─── rebuilds the thumbnail row to match self.attachments ───
-    def refresh_attachment_previews(self):
-        self.ids.attachments_row.clear_widgets()
-        for attachment in self.attachments:
-            thumb = AttachmentThumbnail(image_path=attachment["path"])
-            thumb.attachment_data = attachment
-            thumb.bind(on_remove=self.remove_attachment)
-            self.ids.attachments_row.add_widget(thumb)
-        
-        # collapse the whole row to nothing when there are no photos,
-        # instead of leaving an empty gap on screen
-        self.ids.attachments_scroll.height = dp(88) if self.attachments else 0
+        token = f"{{{{img:{file_path}}}}}"
+        field = self.ids.content_field
+        try:
+            field.insert_text(token)
+        except AttributeError:
+            # Fallback if this KivyMD build's MDTextField doesn't expose
+            # insert_text() directly -- adds to the end instead of the
+            # cursor, but keeps things working either way.
+            field.text = field.text + ("\n" if field.text else "") + token
 
-    def remove_attachment(self, thumbnail_widget):
-        attachment = thumbnail_widget.attachment_data
-        if attachment["id"] is not None:
-            delete_attachment(attachment["id"])  # only saved attachments need db deletion
-        self.attachments.remove(attachment)
-        self.refresh_attachment_previews()
+    # ─── Edit / Preview toggle ───
+    def toggle_preview(self):
+        self.is_preview = not self.is_preview
+        if self.is_preview:
+            self.show_preview_mode()
+        else:
+            self.show_edit_mode()
+
+    def show_edit_mode(self):
+        container = self.ids.content_container
+        if self._preview_scroll.parent is not None:
+            container.remove_widget(self._preview_scroll)
+        if self.ids.content_field.parent is None:
+            container.add_widget(self.ids.content_field)
+
+    def show_preview_mode(self):
+        raw = self.ids.content_field.text
+        self._preview_content.clear_widgets()
+
+        # Splitting on the token pattern gives alternating text/image-path
+        # pieces: [text, path, text, path, ..., text]. Even indices are
+        # plain text, odd indices are image file paths.
+        parts = IMAGE_TOKEN_PATTERN.split(raw)
+
+        for i, part in enumerate(parts):
+            if i % 2 == 1:
+                img = Image(
+                    source=part,
+                    size_hint=(None, None),
+                    size=(dp(220), dp(220)),
+                    allow_stretch=True,
+                )
+                self._preview_content.add_widget(img)
+            elif part.strip():
+                label = Label(
+                    text=part,
+                    size_hint_y=None,
+                    color=(0.29, 0.20, 0.15, 1),
+                    halign="left",
+                    valign="top",
+                )
+                # Manual bindings since this widget is built in Python, not
+                # KV -- keeps text wrapping to the actual available width
+                # and the label's height matched to its rendered text.
+                label.bind(width=lambda inst, val: setattr(inst, "text_size", (val, None)))
+                label.bind(texture_size=lambda inst, val: setattr(inst, "height", val[1]))
+                self._preview_content.add_widget(label)
+
+        container = self.ids.content_container
+        if self.ids.content_field.parent is not None:
+            container.remove_widget(self.ids.content_field)
+        if self._preview_scroll.parent is None:
+            container.add_widget(self._preview_scroll)
 
     def save_note(self):
         title = self.ids.title_field.text.strip()
@@ -121,13 +165,8 @@ class NoteEditorScreen(MDScreen):
 
         if self.current_note_id is None:
             create_notes(DEFAULT_NOTEBOOK_ID, title, content)
-            # Any photos picked before this first save are lost -- but
-            # pick_image() blocks that case above, so it shouldn't happen.
         else:
             update_notes(self.current_note_id, title, content)
-            for attachment in self.attachments:
-                if attachment["id"] is None:  # newly picked, not saved yet
-                    create_attachment(self.current_note_id, attachment["path"])
 
         self.go_back()
 
@@ -145,5 +184,5 @@ class NoteEditorScreen(MDScreen):
         self.ids.title_field.text = ""
         self.ids.content_field.text = ""
         self.current_note_id = None
-        self.attachments = []
+        self.is_preview = False
         self.manager.current = "notes"
