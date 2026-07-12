@@ -7,7 +7,8 @@ MOCK_TASKS = [
         "due_date": "2026-07-05",
         "priority": "High",
         "category": "Study",
-        "completed": False
+        "completed": False,
+        "subtasks": ["Write introduction", "Add diagrams", "Proofread"]
     },
     {
         "id": 2,
@@ -15,7 +16,8 @@ MOCK_TASKS = [
         "due_date": "2026-07-05",
         "priority": "Low",
         "category": "Life",
-        "completed": False
+        "completed": False,
+        "subtasks": ["Milk", "Bread", "Eggs"]
     },
     {
         "id": 3,
@@ -23,7 +25,8 @@ MOCK_TASKS = [
         "due_date": "2026-07-07",
         "priority": "Medium",
         "category": "Study",
-        "completed": False
+        "completed": False,
+        "subtasks": ["Chapter 1", "Chapter 2", "Chapter 3"]
     },
     {
         "id": 4,
@@ -31,7 +34,8 @@ MOCK_TASKS = [
         "due_date": "2026-07-10",
         "priority": "Low",
         "category": "Health",
-        "completed": False
+        "completed": False,
+        "subtasks": []
     },
     {
         "id": 5,
@@ -39,7 +43,8 @@ MOCK_TASKS = [
         "due_date": "2026-07-12",
         "priority": "High",
         "category": "Work",
-        "completed": False
+        "completed": False,
+        "subtasks": ["Prepare slides", "Send agenda"]
     },
     {
         "id": 6,
@@ -47,7 +52,8 @@ MOCK_TASKS = [
         "due_date": "2026-07-15",
         "priority": "High",
         "category": "Life",
-        "completed": False
+        "completed": False,
+        "subtasks": ["Check bank balance", "Log into portal"]
     },
 ]
 

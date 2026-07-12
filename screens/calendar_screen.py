@@ -7,6 +7,12 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
 from kivy.graphics import Color, RoundedRectangle, Rectangle
+from widgets.checklist_item import ChecklistItem
+
+try:
+    from database.task_queries import get_tasks_by_date, get_all_task_dates
+except ImportError:
+    from mock_queries import get_tasks_by_date, get_all_task_dates
 
 
 class CalendarScreen(Screen):
@@ -24,7 +30,10 @@ class CalendarScreen(Screen):
         )
         with self.main_layout.canvas.before:
             Color(0.96, 0.93, 0.86, 1)
-            self.bg_rect = Rectangle(pos=self.main_layout.pos, size=self.main_layout.size)
+            self.bg_rect = Rectangle(
+                pos=self.main_layout.pos,
+                size=self.main_layout.size
+            )
         self.main_layout.bind(pos=lambda w, v: setattr(self.bg_rect, 'pos', v))
         self.main_layout.bind(size=lambda w, v: setattr(self.bg_rect, 'size', v))
 
@@ -105,11 +114,11 @@ class CalendarScreen(Screen):
         )
         self.task_label.bind(size=self.task_label.setter("text_size"))
 
-        # Task list
+        # Task list — scrollable
         self.task_list = BoxLayout(
             orientation="vertical",
             size_hint_y=None,
-            spacing=6
+            spacing=8
         )
         self.task_list.bind(
             minimum_height=self.task_list.setter("height")
@@ -138,11 +147,6 @@ class CalendarScreen(Screen):
             self.current_year, self.current_month, 1
         ).strftime("%B %Y")
         self.month_label.text = month_name
-
-        try:
-            from database.task_queries import get_all_task_dates
-        except ImportError:
-            from mock_queries import get_all_task_dates
 
         task_dates = get_all_task_dates()
         cal = calendar.monthcalendar(self.current_year, self.current_month)
@@ -184,11 +188,6 @@ class CalendarScreen(Screen):
         self.selected_date = date_str
         self.task_list.clear_widgets()
 
-        try:
-            from database.task_queries import get_tasks_by_date
-        except ImportError:
-            from mock_queries import get_tasks_by_date
-
         tasks = get_tasks_by_date(date_str)
         display = datetime.strptime(date_str, "%Y-%m-%d").strftime("%B %d, %Y")
         self.task_label.text = f"Tasks for {display}:"
@@ -203,42 +202,15 @@ class CalendarScreen(Screen):
             ))
             return
 
-        PRIORITY_COLORS = {
-            "High":   (0.98, 0.85, 0.85, 1),
-            "Medium": (0.98, 0.93, 0.85, 1),
-            "Low":    (0.91, 0.95, 0.87, 1),
-        }
-
+        # Show each task as a proper ChecklistItem widget
         for task in tasks:
-            row = BoxLayout(
-                size_hint_y=None,
-                height=44,
-                padding=[12, 6, 12, 6],
-                spacing=10
-            )
-            with row.canvas.before:
-                Color(*PRIORITY_COLORS.get(task["priority"], (0.95, 0.93, 0.90, 1)))
-                rect = RoundedRectangle(pos=row.pos, size=row.size, radius=[10])
-            row.bind(pos=lambda w, v, r=rect: setattr(r, 'pos', v))
-            row.bind(size=lambda w, v, r=rect: setattr(r, 'size', v))
-
-            row.add_widget(Label(
+            item = ChecklistItem(
                 text=task["title"],
-                font_size=13,
-                color=(0.02, 0.01, 0.01, 1),
-                halign="left",
-                valign="middle",
-                text_size=(None, None)
-            ))
-            row.add_widget(Label(
-                text=task["priority"],
-                font_size=11,
-                bold=True,
-                color=(0.43, 0.41, 0.38, 1),
-                size_hint_x=None,
-                width=60
-            ))
-            self.task_list.add_widget(row)
+                category=task.get("category", "Study"),
+                priority=task.get("priority", "Medium"),
+                subtasks=task.get("subtasks", [])
+            )
+            self.task_list.add_widget(item)
 
     def prev_month(self, instance):
         if self.current_month == 1:
