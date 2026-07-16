@@ -366,6 +366,24 @@
                 icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').make_highlight()
 
+            MDIconButton:
+                icon: "format-align-left"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                on_release: app.root.get_screen('note_editor').set_align_left()
+
+            MDIconButton:
+                icon: "format-align-center"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                on_release: app.root.get_screen('note_editor').set_align_center()
+
+            MDIconButton:
+                icon: "format-align-right"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                on_release: app.root.get_screen('note_editor').set_align_right()
+
             Widget:
                 # empty spacer -- pushes the font controls to the right
 

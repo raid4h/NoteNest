@@ -46,8 +46,11 @@ FONT_SIZES = [sp(14), sp(16), sp(18), sp(20), sp(24), sp(28)]
 # whole-note setting, same limitation as font size.
 FONT_CHOICES = [
     "Roboto",
-    "fonts/OpenSans-Regular.ttf",
-    "fonts/RobotoMono-Regular.ttf",
+    os.path.join(_PROJECT_ROOT, "fonts", "OpenSans-Regular.ttf"),
+    os.path.join(_PROJECT_ROOT, "fonts", "RobotoMono-Regular.ttf"),
+    os.path.join(_PROJECT_ROOT, "fonts", "Baskerville-Regular.ttf"),
+    os.path.join(_PROJECT_ROOT, "fonts", "Caveat-Regular.ttf"),
+    os.path.join(_PROJECT_ROOT, "fonts", "Yuyu-Regular.ttf"),
 ]
 
 
@@ -247,6 +250,17 @@ class NoteEditorScreen(MDScreen):
     def make_highlight(self):
         self._wrap_selection("==")
 
+    # ─── text alignment (whole note, not per-selection — same Kivy
+    #     limitation as font size/family above) ───
+    def set_align_left(self):
+        self.ids.content_field.halign = "left"
+
+    def set_align_center(self):
+        self.ids.content_field.halign = "center"
+
+    def set_align_right(self):
+        self.ids.content_field.halign = "right"
+
     # ─── font size (whole note, not per-selection) ───
     def increase_font_size(self):
         field = self.ids.content_field
@@ -305,7 +319,7 @@ class NoteEditorScreen(MDScreen):
                     markup=True,
                     size_hint_y=None,
                     color=(0.29, 0.20, 0.15, 1),
-                    halign="left",
+                    halign=self.ids.content_field.halign,
                     valign="top",
                     font_size=self.ids.content_field.font_size,
                     font_name=self.ids.content_field.font_name,
