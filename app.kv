@@ -133,15 +133,31 @@
     elevation: 2
     md_bg_color: 0.97, 0.95, 0.90, 1
 
-    MDLabel:
-        text: root.title
-        font_style: "Title"
-        role: "medium"
+    MDBoxLayout:
+        orientation: "horizontal"
         adaptive_height: True
-        shorten: True
-        shorten_from: "right"
-        theme_text_color: "Custom"
-        text_color: 0.29, 0.20, 0.15, 1
+        spacing: "6dp"
+
+        MDLabel:
+            text: root.title
+            font_style: "Title"
+            role: "medium"
+            adaptive_height: True
+            shorten: True
+            shorten_from: "right"
+            theme_text_color: "Custom"
+            text_color: 0.29, 0.20, 0.15, 1
+
+        MDIconButton:
+            id: pin_icon
+            # filled pin if pinned, outline if not -- updates
+            # automatically whenever root.is_pinned changes
+            icon: "pin" if root.is_pinned else "pin-outline"
+            theme_icon_color: "Custom"
+            icon_color: 0.54, 0.35, 0.17, 1
+            size_hint: None, None
+            size: dp(36), dp(36)
+            on_release: root.toggle_pin()
 
     MDLabel:
         text: root.preview
@@ -152,7 +168,7 @@
         shorten_from: "right"
         theme_text_color: "Custom"
         text_color: 0.54, 0.35, 0.17, 1
-
+        
 # ── AttachmentThumbnail ──────────────────────────────────────────
 <AttachmentThumbnail>:
     size_hint: None, None
