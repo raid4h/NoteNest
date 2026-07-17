@@ -194,33 +194,32 @@
 
 # ── NotesScreen ────────────────────────────────────────────────
 <NotesScreen>:
-    md_bg_color: 0.97, 0.95, 0.90, 1
+    id: notes_screen_root
 
     FloatLayout:
 
         MDBoxLayout:
             orientation: "vertical"
             size_hint: 1, 1
-            md_bg_color: 0.97, 0.95, 0.90, 1
 
             MDFloatLayout:
+                id: top_bar
                 size_hint_y: None
                 height: "56dp"
-                md_bg_color: 0.92, 0.84, 0.66, 1
 
                 MDIconButton:
+                    id: back_button
                     icon: "arrow-left"
                     theme_icon_color: "Custom"
-                    icon_color: 0.29, 0.20, 0.15, 1
                     pos_hint: {"x": 0, "center_y": 0.5}
                     on_release: root.go_home()
 
                 MDLabel:
+                    id: header_label
                     text: "Notes"
                     font_style: "Title"
                     role: "large"
                     theme_text_color: "Custom"
-                    text_color: 0.29, 0.20, 0.15, 1
                     halign: "center"
                     valign: "middle"
                     text_size: self.size
@@ -234,22 +233,22 @@
                     pos_hint: {"right": 1, "center_y": 0.5}
 
                     MDIconButton:
+                        id: sort_title_button
                         icon: "sort-alphabetical-ascending"
                         theme_icon_color: "Custom"
-                        icon_color: 0.29, 0.20, 0.15, 1
                         on_release: root.sort_notes('title')
 
                     MDIconButton:
+                        id: sort_date_button
                         icon: "sort-calendar-ascending"
                         theme_icon_color: "Custom"
-                        icon_color: 0.29, 0.20, 0.15, 1
                         on_release: root.sort_notes('date')
 
             MDBoxLayout:
+                id: search_bar
                 size_hint_y: None
                 height: "72dp"
                 padding: "16dp", "8dp"
-                md_bg_color: 0.97, 0.95, 0.90, 1
 
                 MDTextField:
                     id: search_field
@@ -267,14 +266,12 @@
                     padding: "12dp"
                     spacing: "10dp"
                     adaptive_height: True
-                    md_bg_color: 0.97, 0.95, 0.90, 1
 
         MDFabButton:
+            id: add_note_fab
             icon: "plus"
             pos_hint: {"right": 0.93, "y": 0.04}
-            md_bg_color: 0.72, 0.79, 0.54, 1
             theme_icon_color: "Custom"
-            icon_color: 0.29, 0.20, 0.15, 1
             on_release: root.open_note_editor()
 
 <NoteEditorScreen>:
