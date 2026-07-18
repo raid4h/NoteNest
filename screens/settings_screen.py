@@ -37,7 +37,7 @@ class SettingsScreen(ThemedScreenMixin, MDScreen):
         theme_manager.set_dark_theme()
 
     def set_pink_theme(self):
-        theme_manager.set_pink_theme()
+        theme_manager.set_floral_theme()
 
     def set_cyberpunk_theme(self):
         theme_manager.set_cyberpunk_theme()

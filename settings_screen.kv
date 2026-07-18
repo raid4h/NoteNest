@@ -1,7 +1,3 @@
-# settings_screen.kv
-# Layout for SettingsScreen. Every id here must match what
-# settings_screen.py's apply_theme() references, or you'll get
-# a KeyError the moment that screen opens.
 
 <SettingsScreen>:
     MDBoxLayout:
@@ -71,11 +67,11 @@
                                 text: "Dark"
 
                         MDButton:
-                            id: pink_button
+                            id: floral_button
                             style: "filled"
                             on_release: root.set_pink_theme()
                             MDButtonText:
-                                text: "Pink"
+                                text: "Floral"
 
                         MDButton:
                             id: cyber_button
