@@ -158,6 +158,18 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
         # fires DURING super().__init__() above, before this line would even
         # run -- so a bind placed here always misses it. Overriding the
         # method below is the correct way to hook into this event.
+        # Undo/redo history for the whole note. Each entry is a full
+        # snapshot of the note's text at some point in time -- simple,
+        # not per-keystroke, but easy to reason about.
+        self._undo_stack = []
+        self._redo_stack = []
+        # True while WE are the ones changing field.text (e.g. during an
+        # undo/redo itself) -- stops that change from being recorded as
+        # a brand-new edit, which would corrupt the history.
+        self._suppress_history = False
+        # Holds the pending "user paused typing" timer so it can be
+        # cancelled/restarted on every keystroke.
+        self._history_debounce_event = None
 
     def on_kv_post(self, base_widget):
         # Kivy calls this automatically once this screen's KV rule has been
@@ -165,6 +177,9 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
         # unlike binding to on_kv_post from inside __init__.
         super().on_kv_post(base_widget)
         self.ids.content_field.bind(selection_text=self._track_selection)
+        # Fires on every keystroke -- drives both the word/char count
+        # and the undo checkpoint timer.
+        self.ids.content_field.bind(text=self._on_content_text_changed)
 
     def on_theme_applied(self):
         field = self.ids.get("content_field")
@@ -181,6 +196,85 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
         if value:
             start, end = sorted((field.selection_from, field.selection_to))
             self._last_selection = (value, start, end)
+    
+    def _on_content_text_changed(self, field, value):
+        # Runs on every single keystroke.
+        self._update_word_count(value)
+
+        if self._suppress_history:
+            # This change came from our own undo/redo code, not the
+            # user typing -- don't record it as a new edit.
+            return
+
+        # Restart the "pause" timer -- if the user keeps typing, this
+        # keeps getting cancelled and rescheduled, so a checkpoint only
+        # actually saves once typing stops for a moment.
+        if self._history_debounce_event:
+            self._history_debounce_event.cancel()
+        self._history_debounce_event = Clock.schedule_once(self._push_history_snapshot, 1.2)
+
+    def _push_history_snapshot(self, dt):
+        # Saves the current text as a checkpoint, unless it's identical
+        # to the most recent one already saved (avoids useless duplicates).
+        field = self.ids.content_field
+        current_text = field.text
+
+        if self._undo_stack and self._undo_stack[-1] == current_text:
+            return
+
+        self._undo_stack.append(current_text)
+        # Cap history length so a long writing session can't grow this
+        # list forever.
+        if len(self._undo_stack) > 50:
+            self._undo_stack.pop(0)
+
+        # A fresh edit invalidates any redo history, same as standard
+        # editors (you can't redo forward after making a new change).
+        self._redo_stack.clear()
+
+    def undo_note(self):
+        # Cancel any pending "pause" checkpoint -- we don't want it
+        # firing after we've already jumped to an older state.
+        if self._history_debounce_event:
+            self._history_debounce_event.cancel()
+            self._history_debounce_event = None
+
+        if len(self._undo_stack) < 2:
+            # Only the current/baseline checkpoint exists -- nothing
+            # older to go back to.
+            return
+
+        field = self.ids.content_field
+        current = self._undo_stack.pop()
+        self._redo_stack.append(current)
+        previous = self._undo_stack[-1]
+
+        self._suppress_history = True
+        field.text = previous
+        field.cursor = field.get_cursor_from_index(len(previous))
+        self._suppress_history = False
+
+    def redo_note(self):
+        if not self._redo_stack:
+            return
+
+        field = self.ids.content_field
+        next_text = self._redo_stack.pop()
+        self._undo_stack.append(next_text)
+
+        self._suppress_history = True
+        field.text = next_text
+        field.cursor = field.get_cursor_from_index(len(next_text))
+        self._suppress_history = False
+
+    def _update_word_count(self, text):
+        # Refreshes the word/character count label in the toolbar, if
+        # it exists in this screen's KV (guarded with the "in self.ids"
+        # check so this doesn't crash before the label is added below).
+        char_count = len(text)
+        word_count = len(text.split()) if text.strip() else 0
+        if "word_count_label" in self.ids:
+            self.ids.word_count_label.text = f"{word_count} words · {char_count} chars"
 
     def on_enter(self):
         self.is_preview = False
@@ -193,30 +287,44 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
             field.font_name = DEFAULT_FONT_NAME
             field.font_size = DEFAULT_FONT_SIZE
             field.halign = DEFAULT_ALIGN
+
+            if self._history_debounce_event:
+                self._history_debounce_event.cancel()
+                self._history_debounce_event = None
+            self._undo_stack = [field.text]
+            self._redo_stack = []
+            self._update_word_count(field.text)
         self.show_edit_mode()
 
     def load_note(self, note_id):
-        note = get_notes_by_id(note_id)
-        field = self.ids.content_field
+            note = get_notes_by_id(note_id)
+            field = self.ids.content_field
 
-        if note is None:
-            self.ids.title_field.text = ""
-            field.text = ""
-            field.font_name = DEFAULT_FONT_NAME
-            field.font_size = DEFAULT_FONT_SIZE
-            field.halign = DEFAULT_ALIGN
-            return
+            if note is None:
+                self.ids.title_field.text = ""
+                field.text = ""
+                field.font_name = DEFAULT_FONT_NAME
+                field.font_size = DEFAULT_FONT_SIZE
+                field.halign = DEFAULT_ALIGN
+            else:
+                self.ids.title_field.text = note[2]
+                stored_content = note[3] or ""
+                font_name, font_size, halign, visible_content = _parse_note_meta(stored_content)
+                field.text = visible_content
+                field.font_name = font_name
+                field.font_size = font_size
+                field.halign = halign
 
-        self.ids.title_field.text = note[2]
-        stored_content = note[3] or ""
-
-        # Pull this note's saved font/size/alignment out of the hidden
-        # marker, and strip the marker itself out of what shows in the box.
-        font_name, font_size, halign, visible_content = _parse_note_meta(stored_content)
-        field.text = visible_content
-        field.font_name = font_name
-        field.font_size = font_size
-        field.halign = halign
+            # Start a brand-new undo history for whichever note just loaded,
+            # with its current text as checkpoint zero -- and cancel any
+            # leftover pause-timer from whatever note was open before this,
+            # so it can't fire late and pollute this note's history.
+            if self._history_debounce_event:
+                self._history_debounce_event.cancel()
+                self._history_debounce_event = None
+            self._undo_stack = [field.text]
+            self._redo_stack = []
+            self._update_word_count(field.text)
 
     # ─── image picking, now with local copying ───
     def pick_image(self):
@@ -446,6 +554,16 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
         if not title:
             print("Please add a title")
             return
+
+        # Record a checkpoint for the exact state being saved.
+        if self._history_debounce_event:
+            self._history_debounce_event.cancel()
+            self._history_debounce_event = None
+        self._push_history_snapshot(0)
+
+        field = self.ids.content_field
+        meta = _build_note_meta(field.font_name, field.font_size, field.halign)
+        content_to_store = meta + content
 
         # Prepend the current font/size/alignment as a hidden metadata
         # marker -- the same trick as {{img:...}} tokens -- so it's

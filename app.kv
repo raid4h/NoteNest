@@ -344,6 +344,40 @@
 
                 MDTextFieldHintText:
                     text: "Title"
+                
+        # ── undo/redo + live word/character count ──
+        MDBoxLayout:
+            size_hint_y: None
+            height: "40dp"
+            padding: "8dp", "2dp"
+            spacing: "4dp"
+            md_bg_color: 0.97, 0.95, 0.90, 1
+
+            MDIconButton:
+                icon: "undo"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                on_release: app.root.get_screen('note_editor').undo_note()
+
+            MDIconButton:
+                icon: "redo"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                on_release: app.root.get_screen('note_editor').redo_note()
+
+            Widget:
+                # empty spacer -- pushes the word count to the right
+
+            MDLabel:
+                id: word_count_label
+                text: "0 words · 0 chars"
+                theme_text_color: "Custom"
+                text_color: 0.54, 0.35, 0.17, 1
+                font_style: "Body"
+                role: "small"
+                halign: "right"
+                size_hint_x: None
+                width: dp(160)
 
         # ── formatting toolbar: bold, italic, underline, highlight,
         #    font size, font family ──
