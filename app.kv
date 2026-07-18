@@ -276,155 +276,154 @@
 
 <NoteEditorScreen>:
     name: "note_editor"
-    md_bg_color: 0.97, 0.95, 0.90, 1
 
     MDBoxLayout:
+        id: screen_container
         orientation: "vertical"
         size_hint: 1, 1
-        md_bg_color: 0.97, 0.95, 0.90, 1
 
         MDBoxLayout:
+            id: top_bar
             size_hint_y: None
             height: "56dp"
             padding: "4dp"
             spacing: "4dp"
-            md_bg_color: 0.92, 0.84, 0.66, 1
 
             MDIconButton:
+                id: back_button
                 icon: "arrow-left"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').go_back()
 
             MDLabel:
+                id: header_label
                 text: "My Note"
                 font_style: "Title"
                 role: "large"
                 theme_text_color: "Custom"
-                text_color: 0.29, 0.20, 0.15, 1
                 size_hint_x: 1
 
             MDIconButton:
+                id: image_button
                 icon: "image-plus"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').pick_image()
 
             MDIconButton:
+                id: preview_button
                 icon: "eye-outline"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').toggle_preview()
 
             MDIconButton:
+                id: duplicate_button
                 icon: "content-copy"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').duplicate_note()
 
             MDIconButton:
+                id: delete_button
                 icon: "delete"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').delete_note()
 
             MDIconButton:
+                id: save_button
                 icon: "content-save"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').save_note()
 
         MDBoxLayout:
+            id: title_field_container
             size_hint_y: None
             height: "72dp"
             padding: "16dp", "8dp"
-            md_bg_color: 0.97, 0.95, 0.90, 1
 
             MDTextField:
                 id: title_field
 
                 MDTextFieldHintText:
                     text: "Title"
-        
+
         # ── formatting toolbar: bold, italic, underline, highlight,
         #    font size, font family ──
         MDBoxLayout:
+            id: toolbar
             size_hint_y: None
             height: "48dp"
             padding: "8dp", "4dp"
             spacing: "4dp"
-            md_bg_color: 0.97, 0.95, 0.90, 1
 
             MDIconButton:
+                id: bold_button
                 icon: "format-bold"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').make_bold()
 
             MDIconButton:
+                id: italic_button
                 icon: "format-italic"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').make_italic()
 
             MDIconButton:
+                id: underline_button
                 icon: "format-underline"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').make_underline()
 
             MDIconButton:
+                id: highlight_button
                 icon: "marker"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').make_highlight()
 
             MDIconButton:
+                id: align_left_button
                 icon: "format-align-left"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').set_align_left()
 
             MDIconButton:
+                id: align_center_button
                 icon: "format-align-center"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').set_align_center()
 
             MDIconButton:
+                id: align_right_button
                 icon: "format-align-right"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').set_align_right()
 
             Widget:
                 # empty spacer -- pushes the font controls to the right
 
             MDIconButton:
+                id: font_decrease_button
                 icon: "format-font-size-decrease"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').decrease_font_size()
 
             MDIconButton:
+                id: font_increase_button
                 icon: "format-font-size-increase"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').increase_font_size()
 
             MDIconButton:
+                id: font_cycle_button
                 icon: "format-font"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').cycle_font()
 
         MDCard:
+            id: content_card
             orientation: "vertical"
             size_hint: 1, 1
             padding: "20dp"
             radius: [20, 20, 20, 20]
             elevation: 1
-            md_bg_color: 1, 0.98, 0.93, 1
 
             MDBoxLayout:
                 id: content_container
@@ -441,10 +440,5 @@
                     # so background_color actually shows instead of being overridden.
                     background_normal: ""
                     background_active: ""
-                    background_color: 1, 0.98, 0.93, 1
-                    foreground_color: 0.29, 0.20, 0.15, 1
-                    hint_text_color: 0.65, 0.52, 0.35, 1
-                    cursor_color: 0.29, 0.20, 0.15, 1
-                    selection_color: 0.72, 0.79, 0.54, 0.4
                     padding: dp(8), dp(8), dp(8), dp(8)
                                         

@@ -1,14 +1,26 @@
+# palettes.py
+#
+# Each theme is a dictionary mapping a SEMANTIC TOKEN (a plain string
+# describing a role, e.g. "background") to the hex color that role
+# should have in that theme.
+#
+# The token names below must be IDENTICAL across every theme dict.
+# That's what lets ThemeManager swap themes safely: it just looks up
+# the same token in a different dictionary.
 
+# Warm, soothing "oat milk latte" palette — cream base with a
+# consistent warm-brown undertone running through every token,
+# instead of separately-chosen warm/cool swatches.
 LIGHT = {
-    "background":     "#F4ECDC",
-    "card_primary":    "#E7E1D4",
-    "card_secondary":  "#D5D0C6",
-    "border":          "#B7B1A7",
-    "accent":          "#9A8E82",
-    "text_secondary":  "#6D6861",
-    "button":          "#3F3026",
-    "text_primary":    "#050302",
-    "button_text":     "#F4ECDC",
+    "background":     "#FBF3E4",
+    "card_primary":    "#F1E4D0",
+    "card_secondary":  "#E8D8C0",
+    "border":          "#D9C4A5",
+    "accent":          "#C8A97E",
+    "text_secondary":  "#8A6F53",
+    "button":          "#6B4A32",
+    "text_primary":    "#3B2A1D",
+    "button_text":     "#FBF3E4",
 }
 
 DARK = {
@@ -23,16 +35,19 @@ DARK = {
     "button_text":     "#222238",
 }
 
+# Pastel blush/mauve/lavender palette — desaturated and lightened
+# across every token so nothing reads as bright or saturated, unlike
+# the original hot-pink/magenta pairing.
 PINK = {
-    "background":      "#FBA0E3",
-    "card_primary":    "#DDD0EB",
-    "card_secondary":  "#BBBDFC",
-    "border":          "#BC9DD4",
-    "accent":          "#FAB8ED",
-    "text_secondary":  "#734f96",
-    "button":          "#A28ACF",
-    "text_primary":    "#C154C1",
-    "button_text":     "#FBA0E3",
+    "background":      "#F8E8F0",
+    "card_primary":    "#F0DCE8",
+    "card_secondary":  "#E6D6EC",
+    "border":          "#D9B8D9",
+    "accent":          "#E7B8D8",
+    "text_secondary":  "#9C7A96",
+    "button":          "#B98CB0",
+    "text_primary":    "#6B4463",
+    "button_text":     "#FDF6FA",
 }
 
 CYBERPUNK = {
@@ -47,7 +62,10 @@ CYBERPUNK = {
     "button_text":     "#0A0A12",
 }
 
-# Semantic token constants DONT FORGET TO USE THESE
+# --- Semantic token constants ---
+# These are just the *names* of the roles — plain strings, not colors.
+# Existing code that imports these (like every themed screen's
+# THEME_MAP) does not need to change at all.
 
 BACKGROUND      = "background"
 CARD_PRIMARY    = "card_primary"

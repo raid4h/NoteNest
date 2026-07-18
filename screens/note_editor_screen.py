@@ -20,6 +20,10 @@ from database.attachment_queries import (
     create_attachment, get_all_attachments, delete_attachment,
 )
 
+from theme.theme_manager import theme_manager
+from theme.themed_screen import ThemedScreenMixin
+from theme.palettes import BACKGROUND, TEXT_PRIMARY, TEXT_SECONDARY, CARD_SECONDARY, CARD_PRIMARY, ACCENT
+
 DEFAULT_NOTEBOOK_ID = 1
 
 # Photos get copied here instead of staying wherever they were picked from,
@@ -110,9 +114,34 @@ def convert_formatting_to_markup(text):
     return text
 
 
-class NoteEditorScreen(MDScreen):
+class NoteEditorScreen(ThemedScreenMixin,MDScreen):
     current_note_id = None
     is_preview = False
+
+    THEME_MAP = {
+        "self":                ("md_bg_color", BACKGROUND),
+        "header_bar":          ("md_bg_color", CARD_SECONDARY),
+        "back_button":         ("icon_color", TEXT_PRIMARY),
+        "header_label":        ("text_color", TEXT_PRIMARY),
+        "image_button":        ("icon_color", TEXT_PRIMARY),
+        "preview_button":      ("icon_color", TEXT_PRIMARY),
+        "duplicate_button":    ("icon_color", TEXT_PRIMARY),
+        "delete_button":       ("icon_color", TEXT_PRIMARY),
+        "save_button":         ("icon_color", TEXT_PRIMARY),
+        "title_bar":           ("md_bg_color", BACKGROUND),
+        "toolbar":             ("md_bg_color", BACKGROUND),
+        "bold_button":         ("icon_color", TEXT_PRIMARY),
+        "italic_button":       ("icon_color", TEXT_PRIMARY),
+        "underline_button":    ("icon_color", TEXT_PRIMARY),
+        "highlight_button":    ("icon_color", TEXT_PRIMARY),
+        "align_left_button":   ("icon_color", TEXT_PRIMARY),
+        "align_center_button": ("icon_color", TEXT_PRIMARY),
+        "align_right_button":  ("icon_color", TEXT_PRIMARY),
+        "decrease_font_button": ("icon_color", TEXT_PRIMARY),
+        "increase_font_button": ("icon_color", TEXT_PRIMARY),
+        "cycle_font_button":   ("icon_color", TEXT_PRIMARY),
+        "content_card":        ("md_bg_color", CARD_PRIMARY),
+    }
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -136,6 +165,17 @@ class NoteEditorScreen(MDScreen):
         # unlike binding to on_kv_post from inside __init__.
         super().on_kv_post(base_widget)
         self.ids.content_field.bind(selection_text=self._track_selection)
+
+    def on_theme_applied(self):
+        field = self.ids.get("content_field")
+        if field is not None:
+            field.background_color = theme_manager.get_color(CARD_PRIMARY)
+            field.foreground_color = theme_manager.get_color(TEXT_PRIMARY)
+            field.hint_text_color = theme_manager.get_color(TEXT_SECONDARY)
+            field.cursor_color = theme_manager.get_color(TEXT_PRIMARY)
+            field.selection_color = self._faded(theme_manager.get_color(ACCENT), 0.4)
+
+        self._refresh_preview_if_active()
 
     def _track_selection(self, field, value):
         if value:
