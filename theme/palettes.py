@@ -1,16 +1,4 @@
-# palettes.py
-#
-# Each theme is a dictionary mapping a SEMANTIC TOKEN (a plain string
-# describing a role, e.g. "background") to the hex color that role
-# should have in that theme.
-#
-# The token names below must be IDENTICAL across every theme dict.
-# That's what lets ThemeManager swap themes safely: it just looks up
-# the same token in a different dictionary.
 
-# Warm, soothing "oat milk latte" palette — cream base with a
-# consistent warm-brown undertone running through every token,
-# instead of separately-chosen warm/cool swatches.
 LIGHT = {
     "background":     "#FBF3E4",
     "card_primary":    "#F1E4D0",
@@ -35,19 +23,16 @@ DARK = {
     "button_text":     "#222238",
 }
 
-# Pastel blush/mauve/lavender palette — desaturated and lightened
-# across every token so nothing reads as bright or saturated, unlike
-# the original hot-pink/magenta pairing.
-PINK = {
-    "background":      "#F8E8F0",
-    "card_primary":    "#F0DCE8",
-    "card_secondary":  "#E6D6EC",
-    "border":          "#D9B8D9",
-    "accent":          "#E7B8D8",
-    "text_secondary":  "#9C7A96",
-    "button":          "#B98CB0",
-    "text_primary":    "#6B4463",
-    "button_text":     "#FDF6FA",
+FLORAL = {
+    "background":      "#DCD6F5",
+    "card_primary":    "#F8F5FC",
+    "card_secondary":  "#F5C7DC",
+    "border":          "#B9AEE8",
+    "accent":          "#F2A6B4",
+    "text_secondary":  "#8A7FA8",
+    "button":          "#E8899F",
+    "text_primary":    "#4A3B6B",
+    "button_text":     "#FFF9FC",
 }
 
 CYBERPUNK = {

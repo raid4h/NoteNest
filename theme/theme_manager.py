@@ -7,12 +7,12 @@
 from kivy.event import EventDispatcher
 from kivy.properties import StringProperty
 
-from theme.palettes import LIGHT, DARK, PINK, CYBERPUNK
+from theme.palettes import LIGHT, DARK, FLORAL, CYBERPUNK
 
 _PALETTES = {
     "light": LIGHT,
     "dark": DARK,
-    "pink": PINK,
+    "floral": FLORAL,
     "cyberpunk": CYBERPUNK,
 }
 
@@ -32,8 +32,8 @@ class ThemeManager(EventDispatcher):
     def set_dark_theme(self):
         self.set_theme("dark")
 
-    def set_pink_theme(self):
-        self.set_theme("pink")
+    def set_floral_theme(self):
+        self.set_theme("floral")
 
     def set_cyberpunk_theme(self):
         self.set_theme("cyberpunk")
