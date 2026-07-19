@@ -332,6 +332,12 @@
                 theme_icon_color: "Custom"
                 on_release: app.root.get_screen('note_editor').toggle_preview()
 
+            MDIconButton:
+                id: export_button
+                icon: "export-variant"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').export_note_as_txt()
+
             # small fixed gap -- separates "view" tools from "note" actions
             Widget:
                 size_hint_x: None

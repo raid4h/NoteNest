@@ -4,7 +4,7 @@
 from kivymd.uix.screen import MDScreen
 from widgets.note_card import NoteCard
 from database.notes_queries import get_all_notes, search_notes as db_search_notes, archive_notes, pin_notes
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 from screens.note_editor_screen import META_PATTERN, IMAGE_TOKEN_PATTERN
 
@@ -18,17 +18,50 @@ from theme.palettes import BACKGROUND, TEXT_PRIMARY, CARD_SECONDARY, ACCENT
 DEFAULT_NOTEBOOK_ID = 1
 
 def _format_last_edited(updated_at):
-    # SQLite's CURRENT_TIMESTAMP is stored as "YYYY-MM-DD HH:MM:SS" --
-    # parse it into something more readable for the note card.
     if not updated_at:
         return ""
+
     try:
-        dt = datetime.strptime(updated_at, "%Y-%m-%d %H:%M:%S")
+        # SQLite's CURRENT_TIMESTAMP stores time in UTC, not this
+        # device's local time zone -- parse it as UTC first, then
+        # convert to whatever time zone the machine is actually set
+        # to, instead of displaying the raw UTC value as if it were
+        # local time (which is why it looked 6 hours off before).
+        dt_utc = datetime.strptime(updated_at, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        dt_local = dt_utc.astimezone()
     except (ValueError, TypeError):
-        # If the stored format is ever different than expected, show the
-        # raw value instead of crashing the notes list.
         return f"Edited {updated_at}"
-    return f"Edited {dt.strftime('%b %d, %Y · %I:%M %p')}"
+
+    now_local = datetime.now().astimezone()
+    delta = now_local - dt_local
+    seconds = delta.total_seconds()
+
+    if seconds < 0:
+        # Guards against a negative gap from clock rounding/skew --
+        # treat it as "just now" instead of showing something confusing
+        # like "-2 seconds ago".
+        seconds = 0
+
+    if seconds < 60:
+        return "Edited just now"
+
+    minutes = int(seconds // 60)
+    if minutes < 60:
+        return f"Edited {minutes} minute{'s' if minutes != 1 else ''} ago"
+
+    hours = int(minutes // 60)
+    if hours < 24:
+        return f"Edited {hours} hour{'s' if hours != 1 else ''} ago"
+
+    days = delta.days
+    if days == 1:
+        return "Edited yesterday"
+    if days < 7:
+        return f"Edited {days} days ago"
+
+    # Older than a week -- switch to an actual date instead of an
+    # ever-growing "X days ago" that stops being useful.
+    return f"Edited {dt_local.strftime('%b %d, %Y')}"
 
 def _clean_preview_text(content):
     # Strips internal formatting/metadata markers out of a note's raw

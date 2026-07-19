@@ -42,6 +42,14 @@ _SCREENS_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(_SCREENS_DIR)
 ATTACHMENTS_DIR = os.path.join(_PROJECT_ROOT, "note_attachments")
 
+# Exported .txt copies of notes go here, same local-folder pattern
+# already used for note_attachments/.
+EXPORTS_DIR = os.path.join(_PROJECT_ROOT, "exported_notes")
+
+# Characters not allowed in Windows filenames -- stripped out of a
+# note's title before it's used as a filename.
+_INVALID_FILENAME_CHARS = re.compile(r'[\\/:*?"<>|]')
+
 # Matches an inline image marker in note content, e.g. {{img:note_attachments/abc123.jpg}}
 IMAGE_TOKEN_PATTERN = re.compile(r"\{\{img:(.*?)\}\}")
 
@@ -857,6 +865,83 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
         if self.current_note_id is not None:
             duplicate_notes(self.current_note_id)
         self.go_back()
+
+    def _sanitize_filename(self, name):
+        # Removes characters Windows won't allow in a filename, and
+        # falls back to "Untitled" if nothing usable is left.
+        cleaned = _INVALID_FILENAME_CHARS.sub("", name).strip()
+        return cleaned if cleaned else "Untitled"
+
+    def _strip_markers_for_export(self, raw_content):
+        # Turns the note's raw stored text (still containing {{img:...}}
+        # tokens and **/__/== markers) into clean plain text -- same
+        # idea as the notes-list preview cleanup, just applied here.
+        text = IMAGE_TOKEN_PATTERN.sub("[Photo]", raw_content)
+        text = re.sub(r"\*\*(.+?)\*\*", r"\1", text, flags=re.DOTALL)
+        text = re.sub(r"__(.+?)__", r"\1", text, flags=re.DOTALL)
+        text = re.sub(r"==(.+?)==", r"\1", text, flags=re.DOTALL)
+        text = re.sub(r"\*(.+?)\*", r"\1", text, flags=re.DOTALL)
+        return text.strip()
+
+    def export_note_as_txt(self):
+        title = self.ids.title_field.text.strip() or "Untitled"
+        clean_content = self._strip_markers_for_export(self.ids.content_field.text)
+
+        os.makedirs(EXPORTS_DIR, exist_ok=True)
+        safe_title = self._sanitize_filename(title)
+        export_path = os.path.join(EXPORTS_DIR, f"{safe_title}.txt")
+
+        # If a note with this exact title was already exported, don't
+        # silently overwrite it -- add a number and try again.
+        counter = 1
+        while os.path.exists(export_path):
+            export_path = os.path.join(EXPORTS_DIR, f"{safe_title} ({counter}).txt")
+            counter += 1
+
+        with open(export_path, "w", encoding="utf-8") as f:
+            f.write(f"{title}\n\n{clean_content}")
+
+        self._show_export_confirmation(export_path)
+
+    def _show_export_confirmation(self, export_path):
+        # Reuses the same popup pattern as the delete confirmation --
+        # a small MDCard inside a ModalView -- since that combination
+        # is already confirmed working in this project.
+        card = MDCard(
+            orientation="vertical",
+            padding=dp(20),
+            spacing=dp(16),
+            radius=[16],
+            size_hint=(None, None),
+            size=(dp(320), dp(170)),
+        )
+
+        message_label = MDLabel(
+            text=f"Note exported to:\n{export_path}",
+            halign="center",
+            theme_text_color="Custom",
+            size_hint_y=None,
+        )
+        message_label.bind(width=lambda inst, val: setattr(inst, "text_size", (val, None)))
+        message_label.bind(texture_size=lambda inst, val: setattr(inst, "height", val[1]))
+        card.add_widget(message_label)
+
+        modal = ModalView(
+            size_hint=(None, None),
+            size=(dp(320), dp(170)),
+            auto_dismiss=True,
+            background_color=(0, 0, 0, 0.5),
+        )
+
+        ok_button = MDButton(MDButtonText(text="OK"), style="filled")
+        ok_button.bind(on_release=lambda *_: modal.dismiss())
+
+        button_row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(48))
+        button_row.add_widget(ok_button)
+        card.add_widget(button_row)
+
+        modal.add_widget(card)
+        modal.open()
 
     def go_back(self):
         self.ids.title_field.text = ""
