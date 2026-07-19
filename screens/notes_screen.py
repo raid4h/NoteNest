@@ -5,6 +5,8 @@ from kivymd.uix.screen import MDScreen
 from widgets.note_card import NoteCard
 from database.notes_queries import get_all_notes, search_notes as db_search_notes, archive_notes, pin_notes
 from datetime import datetime
+import re
+from screens.note_editor_screen import META_PATTERN, IMAGE_TOKEN_PATTERN
 
 from theme.theme_manager import theme_manager
 from theme.themed_screen import ThemedScreenMixin
@@ -27,6 +29,35 @@ def _format_last_edited(updated_at):
         # raw value instead of crashing the notes list.
         return f"Edited {updated_at}"
     return f"Edited {dt.strftime('%b %d, %Y · %I:%M %p')}"
+
+def _clean_preview_text(content):
+    # Strips internal formatting/metadata markers out of a note's raw
+    # stored content, so the notes list preview shows clean readable
+    # text instead of leaking implementation details like
+    # {{meta:...}} or literal **/__/== characters to the user.
+    if not content:
+        return ""
+
+    text = content
+
+    # Strip the hidden per-note font/size/alignment marker at the start
+    text = META_PATTERN.sub("", text)
+
+    # Plain text instead of an emoji -- the default font used for note
+    # card previews doesn't have that glyph, so it was showing as a
+    # missing-character box instead of an actual camera icon.
+    text = IMAGE_TOKEN_PATTERN.sub("[Photo] ", text)
+    
+    # Strip bold/underline/highlight/italic markers -- order matters,
+    # same reasoning as convert_formatting_to_markup in the editor:
+    # ** and __ must be handled before single *, or a leftover marker
+    # gets misread as something else.
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text, flags=re.DOTALL)
+    text = re.sub(r"__(.+?)__", r"\1", text, flags=re.DOTALL)
+    text = re.sub(r"==(.+?)==", r"\1", text, flags=re.DOTALL)
+    text = re.sub(r"\*(.+?)\*", r"\1", text, flags=re.DOTALL)
+
+    return text.strip()
 
                     #NEWLY ADDED PARAMETER
 class NotesScreen(ThemedScreenMixin,MDScreen):
@@ -85,7 +116,7 @@ class NotesScreen(ThemedScreenMixin,MDScreen):
         for note in pinned + unpinned:
             card = NoteCard(
                 title=note[2],           # title
-                preview=note[3] or "",   # content (guard against None)
+                preview=_clean_preview_text(note[3]),   # content
                 note_id=note[0],         # id
                 is_pinned=bool(note[4]),
                 last_edited=_format_last_edited(note[7]),  # updated_at
@@ -113,7 +144,7 @@ class NotesScreen(ThemedScreenMixin,MDScreen):
         for note in results:
             card = NoteCard(
                 title=note[2],
-                preview=note[3] or "",
+                preview=_clean_preview_text(note[3]),
                 note_id=note[0],
                 is_pinned=bool(note[4]),
                 last_edited=_format_last_edited(note[7]),  # updated_at

@@ -13,6 +13,11 @@ from kivy.uix.label import Label
 from kivymd.uix.screen import MDScreen
 from plyer import filechooser
 from kivy.properties import BooleanProperty
+from kivy.uix.modalview import ModalView
+from kivymd.uix.card import MDCard
+from kivymd.uix.label import MDLabel
+from kivymd.uix.button import MDButton, MDButtonText
+from kivy.core.text import LabelBase
 
 from database.notes_queries import (
     get_notes_by_id, create_notes, update_notes, delete_notes, duplicate_notes,
@@ -45,20 +50,121 @@ IMAGE_TOKEN_PATTERN = re.compile(r"\{\{img:(.*?)\}\}")
 # different size per selection -- this is a whole-note setting.
 FONT_SIZES = [sp(14), sp(16), sp(18), sp(20), sp(24), sp(28)]
 
-# Fonts to cycle through with the font-family button. "Roboto" is
-# KivyMD's built-in default; the other two need real .ttf files placed in
-# a fonts/ folder in the project root. This is also a
-# whole-note setting, same limitation as font size.
-FONT_CHOICES = [
-    "Roboto",
-    os.path.join(_PROJECT_ROOT, "fonts", "OpenSans-Regular.ttf"),
-    os.path.join(_PROJECT_ROOT, "fonts", "RobotoMono-Regular.ttf"),
-    os.path.join(_PROJECT_ROOT, "fonts", "Baskerville-Regular.ttf"),
-    os.path.join(_PROJECT_ROOT, "fonts", "Caveat-Regular.ttf"),
-    os.path.join(_PROJECT_ROOT, "fonts", "Yuyu-Regular.ttf"),
-]
+# ─── font family registration for real bold/italic ───
+# Kivy's [b]/[i] markup only works if the font in use has been
+# explicitly registered with its own Bold/Italic files -- a bare
+# font_name string like "Roboto" isn't enough on its own for a plain
+# Label. Registering every font ourselves, with whichever style files
+# actually exist, means bold/italic genuinely work instead of silently
+# doing nothing or being faked with a color tint.
+
+_FONTS_DIR = os.path.join(_PROJECT_ROOT, "fonts")
+
+
+def _font_path(filename):
+    # Returns None for a missing filename (either because that style
+    # doesn't exist for this font, or the file hasn't been added yet)
+    # instead of crashing -- LabelBase.register() is fine receiving
+    # None for an optional style and just falls back to Regular for it.
+    if filename is None:
+        return None
+    path = os.path.join(_FONTS_DIR, filename)
+    return path if os.path.isfile(path) else None
+
+
+# Each font's available style files. Missing keys (e.g. Caveat has no
+# "italic") or missing files on disk are both handled the same way --
+# that style just isn't registered, and Kivy uses Regular instead.
+_FONT_FAMILY_FILES = {
+    "Roboto": {
+        "regular": "Roboto-Regular.ttf",
+        "bold": "Roboto-Bold.ttf",
+        "italic": "Roboto-Italic.ttf",
+        "bolditalic": "Roboto-BoldItalic.ttf",
+    },
+    "OpenSans": {
+        "regular": "OpenSans-Regular.ttf",
+        "bold": "OpenSans-Bold.ttf",
+        "italic": "OpenSans-Italic.ttf",
+        "bolditalic": "OpenSans-BoldItalic.ttf",
+    },
+    "RobotoMono": {
+        "regular": "RobotoMono-Regular.ttf",
+        "bold": "RobotoMono-Bold.ttf",
+        "italic": "RobotoMono-Italic.ttf",
+        "bolditalic": "RobotoMono-BoldItalic.ttf",
+    },
+    "Baskerville": {
+        "regular": "Baskerville-Regular.ttf",
+        "bold": "Baskerville-Bold.ttf",
+        "italic": "Baskerville-Italic.ttf",
+        # No official Bold-Italic file exists for Libre Baskerville --
+        # left out on purpose, falls back to Bold for that combination.
+    },
+    "Caveat": {
+        "regular": "Caveat-Regular.ttf",
+        "bold": "Caveat-Bold.ttf",
+        # Handwriting font, no separate italic style exists at all.
+    },
+    "Yuyu": {
+        "regular": "Yuyu-Regular.ttf",
+        # No bold/italic files available -- always renders as Regular.
+    },
+}
+
+
+def _register_font_families():
+    # Registers each font family with Kivy, and returns the list of
+    # family keys that were actually registered successfully (skipping
+    # any whose Regular file isn't present yet), so FONT_CHOICES only
+    # ever offers fonts that genuinely work.
+    registered = []
+    for family_key, variants in _FONT_FAMILY_FILES.items():
+        regular_path = _font_path(variants.get("regular"))
+        if regular_path is None:
+            continue
+        LabelBase.register(
+            name=family_key,
+            fn_regular=regular_path,
+            fn_bold=_font_path(variants.get("bold")),
+            fn_italic=_font_path(variants.get("italic")),
+            fn_bolditalic=_font_path(variants.get("bolditalic")),
+        )
+        registered.append(family_key)
+    return registered
+
+
+FONT_CHOICES = _register_font_families()
+if not FONT_CHOICES:
+    # Should never actually happen (Roboto's Regular file should always
+    # be present), but guards against an empty font list just in case.
+    FONT_CHOICES = ["Roboto"]
 
 DEFAULT_FONT_NAME = "Roboto"
+
+
+# Maps OLD stored font values (full file paths, from before fonts were
+# registered as proper families) to the new short registered family
+# key, so notes saved before this change still show the right font
+# instead of falling back to default.
+_LEGACY_FONT_FILENAME_TO_KEY = {
+    "opensans-regular.ttf": "OpenSans",
+    "robotomono-regular.ttf": "RobotoMono",
+    "baskerville-regular.ttf": "Baskerville",
+    "caveat-regular.ttf": "Caveat",
+    "yuyu-regular.ttf": "Yuyu",
+}
+
+
+def _normalize_font_name(font_name):
+    # Already a valid new-style family key -- nothing to translate.
+    if font_name in FONT_CHOICES:
+        return font_name
+
+    # Old-style value was a full path -- match on the filename alone,
+    # lowercased, since old paths vary in case and drive letter.
+    filename = os.path.basename(font_name).lower()
+    return _LEGACY_FONT_FILENAME_TO_KEY.get(filename, DEFAULT_FONT_NAME)
 DEFAULT_FONT_SIZE = sp(16)
 DEFAULT_ALIGN = "left"
 
@@ -81,7 +187,7 @@ def _parse_note_meta(stored_content):
             key, value = pair.split("=", 1)
             settings[key] = value
 
-    font_name = settings.get("font", DEFAULT_FONT_NAME)
+    font_name = _normalize_font_name(settings.get("font", DEFAULT_FONT_NAME))
     try:
         font_size = float(settings.get("size", DEFAULT_FONT_SIZE))
     except ValueError:
@@ -113,7 +219,6 @@ def convert_formatting_to_markup(text):
     # highlighter background -- a known, deliberate simplification.
     text = re.sub(r"==(.+?)==", r"[color=#B8860B]\1[/color]", text, flags=re.DOTALL)
     return text
-
 
 class NoteEditorScreen(ThemedScreenMixin,MDScreen):
     current_note_id = None
@@ -684,9 +789,68 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
 
         self.go_back()
 
+# ─── delete confirmation popup ───
+    def _build_delete_confirmation(self):
+        # Built once, the first time delete is pressed, and reused
+        # after that -- no need to rebuild these widgets every tap.
+        card = MDCard(
+            orientation="vertical",
+            padding=dp(20),
+            spacing=dp(16),
+            radius=[16],
+            size_hint=(None, None),
+            size=(dp(300), dp(160)),
+        )
+
+        warning_label = MDLabel(
+            text="Delete this note? This can't be undone.",
+            halign="center",
+            theme_text_color="Custom",
+            size_hint_y=None,
+        )
+        # Same wrapping trick used in show_preview_mode -- makes the
+        # label wrap to the card's width instead of overflowing it.
+        warning_label.bind(width=lambda inst, val: setattr(inst, "text_size", (val, None)))
+        warning_label.bind(texture_size=lambda inst, val: setattr(inst, "height", val[1]))
+        card.add_widget(warning_label)
+
+        button_row = BoxLayout(
+            orientation="horizontal", spacing=dp(12),
+            size_hint_y=None, height=dp(48),
+        )
+
+        cancel_button = MDButton(MDButtonText(text="Cancel"), style="outlined")
+        cancel_button.bind(on_release=lambda *_: self._delete_modal.dismiss())
+
+        confirm_button = MDButton(MDButtonText(text="Delete"), style="filled")
+        confirm_button.bind(on_release=lambda *_: self._confirm_delete())
+
+        button_row.add_widget(cancel_button)
+        button_row.add_widget(confirm_button)
+        card.add_widget(button_row)
+
+        self._delete_modal = ModalView(
+            size_hint=(None, None),
+            size=(dp(300), dp(160)),
+            auto_dismiss=True,
+            background_color=(0, 0, 0, 0.5),
+        )
+        self._delete_modal.add_widget(card)
+
     def delete_note(self):
-        if self.current_note_id is not None:
-            delete_notes(self.current_note_id)
+        if self.current_note_id is None:
+            # Never saved -- nothing in the database to delete, and
+            # nothing worth confirming.
+            self.go_back()
+            return
+
+        if not hasattr(self, "_delete_modal"):
+            self._build_delete_confirmation()
+        self._delete_modal.open()
+
+    def _confirm_delete(self):
+        self._delete_modal.dismiss()
+        delete_notes(self.current_note_id)
         self.go_back()
 
     def duplicate_note(self):

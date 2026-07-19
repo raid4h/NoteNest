@@ -294,8 +294,8 @@
             id: top_bar
             size_hint_y: None
             height: "56dp"
-            padding: "4dp"
-            spacing: "4dp"
+            padding: "8dp", "4dp"
+            spacing: "2dp"
 
             MDIconButton:
                 id: back_button
@@ -310,11 +310,14 @@
                 role: "large"
                 theme_text_color: "Custom"
                 size_hint_x: 1
-            
+                shorten: True
+                shorten_from: "right"
+
+            # ── "view" tools: search, insert image, preview toggle ──
             MDIconButton:
+                id: search_button
                 icon: "magnify"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 on_release: app.root.get_screen('note_editor').toggle_search()
 
             MDIconButton:
@@ -329,11 +332,22 @@
                 theme_icon_color: "Custom"
                 on_release: app.root.get_screen('note_editor').toggle_preview()
 
+            # small fixed gap -- separates "view" tools from "note" actions
+            Widget:
+                size_hint_x: None
+                width: dp(10)
+
             MDIconButton:
                 id: duplicate_button
                 icon: "content-copy"
                 theme_icon_color: "Custom"
                 on_release: app.root.get_screen('note_editor').duplicate_note()
+
+            # gap before delete -- destructive action shouldn't sit
+            # shoulder-to-shoulder with duplicate/save
+            Widget:
+                size_hint_x: None
+                width: dp(10)
 
             MDIconButton:
                 id: delete_button
@@ -358,73 +372,17 @@
 
                 MDTextFieldHintText:
                     text: "Title"
-                
-        # ── undo/redo + live word/character count ──
+
+        # ── live word/character count -- always visible regardless of
+        #    whether search is open, not tied to any toggle ──
         MDBoxLayout:
+            id: word_count_row
             size_hint_y: None
-            height: "40dp"
-            padding: "8dp", "2dp"
-            spacing: "4dp"
-            md_bg_color: 0.97, 0.95, 0.90, 1
-
-            MDIconButton:
-                icon: "undo"
-                theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
-                on_release: app.root.get_screen('note_editor').undo_note()
-
-            MDIconButton:
-                icon: "redo"
-                theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
-                on_release: app.root.get_screen('note_editor').redo_note()
-            
-            # ── in-note search bar (collapsed to nothing until the magnify
-        #    icon in the header is tapped) ──
-        MDBoxLayout:
-            size_hint_y: None
-            height: dp(48) if root.show_search else 0
-            opacity: 1 if root.show_search else 0
-            padding: "8dp", "4dp"
-            spacing: "4dp"
-            md_bg_color: 0.92, 0.84, 0.66, 1
-
-            MDTextField:
-                id: search_query_field
-                on_text: app.root.get_screen('note_editor').on_search_text_change(self.text)
-
-                MDTextFieldHintText:
-                    text: "Find in note..."
-
-            MDLabel:
-                id: search_match_label
-                text: "0/0"
-                theme_text_color: "Custom"
-                text_color: 0.29, 0.20, 0.15, 1
-                size_hint_x: None
-                width: dp(50)
-                halign: "center"
-
-            MDIconButton:
-                icon: "chevron-up"
-                theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
-                on_release: app.root.get_screen('note_editor').search_prev()
-
-            MDIconButton:
-                icon: "chevron-down"
-                theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
-                on_release: app.root.get_screen('note_editor').search_next()
-
-            MDIconButton:
-                icon: "close"
-                theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
-                on_release: app.root.get_screen('note_editor').toggle_search()
+            height: "26dp"
+            padding: "8dp", "0dp"
 
             Widget:
-                # empty spacer -- pushes the word count to the right
+                # spacer -- pushes the count to the right
 
             MDLabel:
                 id: word_count_label
@@ -437,8 +395,82 @@
                 size_hint_x: None
                 width: dp(160)
 
-        # ── formatting toolbar: bold, italic, underline, highlight,
-        #    font size, font family ──
+        # ── in-note search bar: collapses to nothing until the magnify
+        #    icon is tapped. Uses a plain TextInput instead of
+        #    MDTextField -- MDTextField reserves extra vertical space
+        #    for its floating hint label and draws its own border,
+        #    which made this look like a tall box nested inside the
+        #    card's own box. TextInput has no reserved hint space and
+        #    no border of its own, so the card reads as one compact,
+        #    wide bar instead of two overlapping rectangles. ──
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(56) if root.show_search else 0
+            opacity: 1 if root.show_search else 0
+            padding: dp(8), dp(4)
+
+            MDCard:
+                id: search_card
+                orientation: "horizontal"
+                padding: dp(10), dp(4)
+                spacing: dp(6)
+                radius: [16]
+                elevation: 1
+                md_bg_color: 0.92, 0.84, 0.66, 1
+
+                TextInput:
+                    id: search_query_field
+                    multiline: False
+                    hint_text: "Find in note..."
+                    font_size: "14sp"
+                    size_hint_x: 1
+                    background_normal: ""
+                    background_active: ""
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 0.29, 0.20, 0.15, 1
+                    hint_text_color: 0.54, 0.35, 0.17, 1
+                    cursor_color: 0.29, 0.20, 0.15, 1
+                    padding: dp(6), dp(6), dp(6), dp(6)
+                    on_text: app.root.get_screen('note_editor').on_search_text_change(self.text)
+
+                MDLabel:
+                    id: search_match_label
+                    text: "0/0"
+                    theme_text_color: "Custom"
+                    text_color: 0.29, 0.20, 0.15, 1
+                    size_hint_x: None
+                    width: dp(42)
+                    halign: "center"
+
+                MDIconButton:
+                    id: search_prev_button
+                    icon: "chevron-up"
+                    theme_icon_color: "Custom"
+                    icon_color: 0.29, 0.20, 0.15, 1
+                    size_hint: None, None
+                    size: dp(36), dp(36)
+                    on_release: app.root.get_screen('note_editor').search_prev()
+
+                MDIconButton:
+                    id: search_next_button
+                    icon: "chevron-down"
+                    theme_icon_color: "Custom"
+                    icon_color: 0.29, 0.20, 0.15, 1
+                    size_hint: None, None
+                    size: dp(36), dp(36)
+                    on_release: app.root.get_screen('note_editor').search_next()
+
+                MDIconButton:
+                    id: search_close_button
+                    icon: "close"
+                    theme_icon_color: "Custom"
+                    icon_color: 0.29, 0.20, 0.15, 1
+                    size_hint: None, None
+                    size: dp(36), dp(36)
+                    on_release: app.root.get_screen('note_editor').toggle_search()
+
+        # ── formatting toolbar: undo/redo, bold, italic, underline,
+        #    highlight, alignment, font size, font family ──
         MDBoxLayout:
             id: toolbar
             size_hint_y: None
@@ -446,6 +478,26 @@
             padding: "8dp", "4dp"
             spacing: "4dp"
 
+            # ── undo / redo -- moved here from their own row, kept as
+            #    the leftmost group since they're a different kind of
+            #    action (history) than the formatting buttons that follow ──
+            MDIconButton:
+                id: undo_button
+                icon: "undo"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').undo_note()
+
+            MDIconButton:
+                id: redo_button
+                icon: "redo"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').redo_note()
+
+            Widget:
+                size_hint_x: None
+                width: dp(16)
+
+            # ── formatting group: bold / italic / underline / highlight ──
             MDIconButton:
                 id: bold_button
                 icon: "format-bold"
@@ -470,6 +522,11 @@
                 theme_icon_color: "Custom"
                 on_release: app.root.get_screen('note_editor').make_highlight()
 
+            Widget:
+                size_hint_x: None
+                width: dp(16)
+
+            # ── alignment group: left / center / right ──
             MDIconButton:
                 id: align_left_button
                 icon: "format-align-left"
@@ -489,8 +546,9 @@
                 on_release: app.root.get_screen('note_editor').set_align_right()
 
             Widget:
-                # empty spacer -- pushes the font controls to the right
+                # flexible spacer -- pushes the font group to the right
 
+            # ── font group: size down / size up / cycle family ──
             MDIconButton:
                 id: font_decrease_button
                 icon: "format-font-size-decrease"
