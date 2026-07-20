@@ -3,7 +3,19 @@
 
 from kivymd.uix.screen import MDScreen
 from widgets.note_card import NoteCard
-from database.notes_queries import get_all_notes, search_notes as db_search_notes, archive_notes, pin_notes
+from kivy.metrics import dp
+from kivy.properties import BooleanProperty
+from kivy.uix.modalview import ModalView
+from kivy.uix.boxlayout import BoxLayout
+from kivymd.uix.card import MDCard
+from kivymd.uix.label import MDLabel
+from kivymd.uix.button import MDButton, MDButtonText
+
+from database.notes_queries import (
+    get_all_notes, search_notes as db_search_notes, archive_notes,
+    pin_notes, get_notes_by_id, delete_notes,
+)
+import trash_store
 from datetime import datetime, timezone
 import re
 from screens.note_editor_screen import META_PATTERN, IMAGE_TOKEN_PATTERN
@@ -92,9 +104,16 @@ def _clean_preview_text(content):
 
     return text.strip()
 
-                    #NEWLY ADDED PARAMETER
+                    
 class NotesScreen(ThemedScreenMixin,MDScreen):
     sort_by = "date"
+    selection_mode = BooleanProperty(False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Ids of notes currently checked while in bulk-select mode --
+        # cleared whenever selection mode is switched on or off.
+        self.selected_note_ids = set()
 
     #NEWLY ADDED CONSTANTS
     THEME_MAP = {
@@ -150,11 +169,13 @@ class NotesScreen(ThemedScreenMixin,MDScreen):
 
         for note in pinned + unpinned:
             card = NoteCard(
-                title=note[2],           # title
-                preview=_clean_preview_text(note[3]),   # content
+                title=note[2],                        # title
+                preview=_clean_preview_text(note[3]),  # cleaned content
                 note_id=note[0],         # id
                 is_pinned=bool(note[4]),
                 last_edited=_format_last_edited(note[7]),  # updated_at
+                selection_mode=self.selection_mode,
+                is_selected=note[0] in self.selected_note_ids,
             )
             self.ids.notes_list.add_widget(card)
             # Theme this card immediately with whatever the current
@@ -178,11 +199,13 @@ class NotesScreen(ThemedScreenMixin,MDScreen):
 
         for note in results:
             card = NoteCard(
-                title=note[2],
-                preview=_clean_preview_text(note[3]),
-                note_id=note[0],
+                title=note[2],                        # title
+                preview=_clean_preview_text(note[3]),  # cleaned content
+                note_id=note[0],         # id
                 is_pinned=bool(note[4]),
                 last_edited=_format_last_edited(note[7]),  # updated_at
+                selection_mode=self.selection_mode,
+                is_selected=note[0] in self.selected_note_ids,
             )
             self.ids.notes_list.add_widget(card)
             if hasattr(card, "apply_theme"):
@@ -207,4 +230,75 @@ class NotesScreen(ThemedScreenMixin,MDScreen):
         # before it changes -- flip it and save the opposite value.
         new_value = 0 if is_pinned else 1
         pin_notes(note_id, new_value)
+        self.load_notes()
+    
+    def toggle_selection_mode(self):
+        self.selection_mode = not self.selection_mode
+        self.selected_note_ids = set()
+        self._update_selection_label()
+        self.load_notes()
+
+    def on_card_selection_changed(self, note_id, is_selected):
+        if is_selected:
+            self.selected_note_ids.add(note_id)
+        else:
+            self.selected_note_ids.discard(note_id)
+        self._update_selection_label()
+
+    def _update_selection_label(self):
+        if "selection_count_label" in self.ids:
+            count = len(self.selected_note_ids)
+            self.ids.selection_count_label.text = f"{count} selected"
+
+    def delete_selected_notes(self):
+        if not self.selected_note_ids:
+            return
+        self._show_bulk_delete_confirmation()
+
+    def _show_bulk_delete_confirmation(self):
+        count = len(self.selected_note_ids)
+        card = MDCard(
+            orientation="vertical", padding=dp(20), spacing=dp(16),
+            radius=[16], size_hint=(None, None), size=(dp(300), dp(160)),
+        )
+        warning_label = MDLabel(
+            text=f"Delete {count} note{'s' if count != 1 else ''}? This can't be undone.",
+            halign="center", theme_text_color="Custom", size_hint_y=None,
+        )
+        warning_label.bind(width=lambda inst, val: setattr(inst, "text_size", (val, None)))
+        warning_label.bind(texture_size=lambda inst, val: setattr(inst, "height", val[1]))
+        card.add_widget(warning_label)
+
+        button_row = BoxLayout(orientation="horizontal", spacing=dp(12), size_hint_y=None, height=dp(48))
+        cancel_button = MDButton(MDButtonText(text="Cancel"), style="outlined")
+        cancel_button.bind(on_release=lambda *_: modal.dismiss())
+        confirm_button = MDButton(MDButtonText(text="Delete"), style="filled")
+        confirm_button.bind(on_release=lambda *_: self._confirm_bulk_delete(modal))
+        button_row.add_widget(cancel_button)
+        button_row.add_widget(confirm_button)
+        card.add_widget(button_row)
+
+        modal = ModalView(
+            size_hint=(None, None), size=(dp(300), dp(160)),
+            auto_dismiss=True, background_color=(0, 0, 0, 0.5),
+        )
+        modal.add_widget(card)
+        modal.open()
+
+    def _confirm_bulk_delete(self, modal):
+        modal.dismiss()
+        # Snapshot each note into local trash before deleting, same
+        # recovery mechanism as single-note deletion -- a bulk delete
+        # is still recoverable from Recently Deleted afterward.
+        for note_id in list(self.selected_note_ids):
+            note = get_notes_by_id(note_id)
+            if note is not None:
+                trash_store.add_to_trash(
+                    notebook_id=note[1], title=note[2],
+                    content=note[3] or "", category_id=note[8],
+                )
+            delete_notes(note_id)
+
+        self.selection_mode = False
+        self.selected_note_ids = set()
         self.load_notes()

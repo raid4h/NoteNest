@@ -1,6 +1,4 @@
-# one note card widget (used by home_screen)
 # widgets/note_card.py
-
 from kivymd.uix.card import MDCard
 from kivy.properties import StringProperty, NumericProperty, BooleanProperty
 
@@ -11,30 +9,34 @@ class NoteCard(MDCard):
     note_id = NumericProperty(0)
     is_pinned = BooleanProperty(False)
     last_edited = StringProperty("")
+    # Multi-select support: selection_mode is set the same on every
+    # card by NotesScreen when bulk-select is toggled; is_selected
+    # tracks whether THIS card is currently checked.
+    selection_mode = BooleanProperty(False)
+    is_selected = BooleanProperty(False)
 
-    # track that the touch started on this card
     def on_touch_down(self, touch):
-        # If the touch landed on the pin icon, let it handle itself --
-        # don't record this as "the card was pressed," or the pin
-        # button's own tap-to-toggle would also open the note editor.
         if "pin_icon" in self.ids and self.ids.pin_icon.collide_point(*touch.pos):
             return super().on_touch_down(touch)
-
         if self.collide_point(*touch.pos):
             self._touch_mine = True
         return super().on_touch_down(touch)
 
-    # only open note if the tap both started and ended on this card
     def on_touch_up(self, touch):
-        # Same exclusion as above -- if this touch is over the pin icon,
-        # don't treat it as "open the note," just let the button's own
-        # on_release logic run normally.
         if "pin_icon" in self.ids and self.ids.pin_icon.collide_point(*touch.pos):
             self._touch_mine = False
             return super().on_touch_up(touch)
 
         if self.collide_point(*touch.pos) and getattr(self, '_touch_mine', False):
             self._touch_mine = False
+
+            if self.selection_mode:
+                # In selection mode, tapping anywhere on the card
+                # toggles its checked state instead of opening it.
+                self.is_selected = not self.is_selected
+                self._notify_selection_changed()
+                return True
+
             from kivymd.app import MDApp
             app = MDApp.get_running_app()
             editor = app.root.get_screen("note_editor")
@@ -44,10 +46,14 @@ class NoteCard(MDCard):
         self._touch_mine = False
         return super().on_touch_up(touch)
 
-    # called when the pin icon is tapped -- hands off to the notes
-    # screen, which owns the actual database call and list refresh
     def toggle_pin(self):
         from kivymd.app import MDApp
         app = MDApp.get_running_app()
         notes_screen = app.root.get_screen("notes")
         notes_screen.toggle_pin_note(self.note_id, self.is_pinned)
+
+    def _notify_selection_changed(self):
+        from kivymd.app import MDApp
+        app = MDApp.get_running_app()
+        notes_screen = app.root.get_screen("notes")
+        notes_screen.on_card_selection_changed(self.note_id, self.is_selected)

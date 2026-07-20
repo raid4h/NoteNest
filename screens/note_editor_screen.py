@@ -19,6 +19,9 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.button import MDButton, MDButtonText
 from kivy.core.text import LabelBase
 import trash_store
+import webbrowser
+from kivymd.uix.textfield import MDTextField, MDTextFieldHintText
+from kivy.utils import platform
 
 from database.notes_queries import (
     get_notes_by_id, create_notes, update_notes, delete_notes, duplicate_notes,
@@ -53,6 +56,8 @@ _INVALID_FILENAME_CHARS = re.compile(r'[\\/:*?"<>|]')
 
 # Matches an inline image marker in note content, e.g. {{img:note_attachments/abc123.jpg}}
 IMAGE_TOKEN_PATTERN = re.compile(r"\{\{img:(.*?)\}\}")
+# Matches an inline hyperlink marker, e.g. {{link:https://example.com|click here}}
+LINK_TOKEN_PATTERN = re.compile(r"\{\{link:(.*?)\|(.*?)\}\}", re.DOTALL)
 
 # A fixed list of sizes to step through with the font-size buttons. Kivy
 # text widgets only support ONE size for their entire content, not a
@@ -210,24 +215,24 @@ def _parse_note_meta(stored_content):
 def _build_note_meta(font_name, font_size, halign):
     return f"{{{{meta:font={font_name}|size={font_size}|align={halign}}}}}\n"
 
-# ─── converts our plain-text formatting markers into real Kivy markup ───
-def convert_formatting_to_markup(text):
-    # escape_markup() first, so if someone literally types [ or ] in a
-    # note, it shows as plain text instead of breaking the markup parser.
-    text = escape_markup(text)
-
-    # Order matters: ** and __ must convert before single * or a leftover
-    # underscore would be treated as a marker, since both bold/underline
-    # use a doubled version of a character that plain italic uses singly.
+def _escape_and_apply_format_markup(text):
+    # Assumes text has ALREADY been escape_markup()'d -- kept separate
+    # from escaping so link conversion (which injects real markup tags)
+    # can happen safely in between the two steps.
     text = re.sub(r"\*\*(.+?)\*\*", r"[b]\1[/b]", text, flags=re.DOTALL)
     text = re.sub(r"__(.+?)__", r"[u]\1[/u]", text, flags=re.DOTALL)
     text = re.sub(r"\*(.+?)\*", r"[i]\1[/i]", text, flags=re.DOTALL)
-
     # Kivy's Label markup has no true background-highlight tag, so this
     # is approximated with a distinct text color instead of a real
     # highlighter background -- a known, deliberate simplification.
     text = re.sub(r"==(.+?)==", r"[color=#B8860B]\1[/color]", text, flags=re.DOTALL)
     return text
+
+
+def convert_formatting_to_markup(text):
+    # Kept for any other caller that just needs bold/italic/underline/
+    # highlight with no link support.
+    return _escape_and_apply_format_markup(escape_markup(text))
 
 class NoteEditorScreen(ThemedScreenMixin,MDScreen):
     current_note_id = None
@@ -290,6 +295,16 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
         # Holds the pending "user paused typing" timer so it can be
         # cancelled/restarted on every keystroke.
         self._history_debounce_event = None
+        # Maps a per-render "ref" key (e.g. "link0") to its real URL --
+        # rebuilt fresh every time Preview mode renders, since Kivy
+        # Label's [ref=...] markup can only carry a short id, not a
+        # full URL directly.
+        self._preview_link_map = {}
+        self._link_ref_counter = 0
+        # Holds whatever text was selected right before the link popup
+        # opened, since opening the popup shifts keyboard focus away
+        # from content_field.
+        self._pending_link_selection = None
 
     def on_kv_post(self, base_widget):
         # Kivy calls this automatically once this screen's KV rule has been
@@ -658,6 +673,127 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
         field.cursor = field.get_cursor_from_index(end + 2 * m_len)
         self._last_selection = None
 
+    def _convert_links_to_markup(self, text):
+        # Replaces each {{link:URL|label}} token with a Kivy [ref=key]
+        # markup span (clickable text), recording key -> URL in
+        # self._preview_link_map so _on_preview_link_pressed can look
+        # it up when tapped.
+        def _replace(match):
+            url, label = match.group(1), match.group(2)
+            key = f"link{self._link_ref_counter}"
+            self._link_ref_counter += 1
+            self._preview_link_map[key] = url
+            return f"[ref={key}][u][color=#3B6EA5]{label}[/color][/u][/ref]"
+        return LINK_TOKEN_PATTERN.sub(_replace, text)
+
+    def _convert_part_for_preview(self, text):
+        # Order matters: escape first (protects literal [ ] the user
+        # typed), THEN convert links (injects real [ref]/[color] tags),
+        # THEN bold/italic/underline/highlight -- doing links before
+        # escaping would corrupt the tags we just inserted.
+        text = escape_markup(text)
+        text = self._convert_links_to_markup(text)
+        text = _escape_and_apply_format_markup(text)
+        return text
+
+    def _on_preview_link_pressed(self, instance, ref):
+        # Fires when a [ref=...] span is tapped in Preview mode.
+        url = self._preview_link_map.get(ref)
+        if url:
+            self._open_url(url)
+
+    def _open_url(self, url):
+        # webbrowser.open() works fine on Windows/Mac/Linux, but has no
+        # reliable browser to hand off to on Android. On Android,
+        # firing an explicit system "open this URL" intent via pyjnius
+        # is the standard, well-tested way Kivy apps do this instead.
+        # This only ever runs on an actual Android device/build --
+        # desktop behavior below is completely unchanged.
+        if platform == "android":
+            from jnius import autoclass
+            Intent = autoclass("android.content.Intent")
+            Uri = autoclass("android.net.Uri")
+            PythonActivity = autoclass("org.kivy.android.PythonActivity")
+
+            intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            PythonActivity.mActivity.startActivity(intent)
+        else:
+            webbrowser.open(url)
+
+    # ─── hyperlink insertion ───
+    def make_link(self):
+        field = self.ids.content_field
+        # Snapshot the current selection before the popup steals focus.
+        if self._last_selection:
+            selected, start, end = self._last_selection
+            if field.text[start:end] == selected:
+                self._pending_link_selection = (selected, start, end)
+            else:
+                self._pending_link_selection = None
+        else:
+            self._pending_link_selection = None
+
+        self._show_link_url_popup()
+
+    def _show_link_url_popup(self):
+        card = MDCard(
+            orientation="vertical", padding=dp(20), spacing=dp(14),
+            radius=[16], size_hint=(None, None), size=(dp(320), dp(180)),
+        )
+
+        prompt_label = MDLabel(
+            text="Enter a URL to link to:", halign="center",
+            theme_text_color="Custom", size_hint_y=None, height=dp(28),
+        )
+        card.add_widget(prompt_label)
+
+        url_field = MDTextField(size_hint_y=None, height=dp(48))
+        url_field.add_widget(MDTextFieldHintText(text="https://example.com"))
+        card.add_widget(url_field)
+
+        button_row = BoxLayout(orientation="horizontal", spacing=dp(12), size_hint_y=None, height=dp(48))
+        cancel_button = MDButton(MDButtonText(text="Cancel"), style="outlined")
+        cancel_button.bind(on_release=lambda *_: modal.dismiss())
+        add_button = MDButton(MDButtonText(text="Add Link"), style="filled")
+        add_button.bind(on_release=lambda *_: self._confirm_link(url_field.text, modal))
+        button_row.add_widget(cancel_button)
+        button_row.add_widget(add_button)
+        card.add_widget(button_row)
+
+        modal = ModalView(
+            size_hint=(None, None), size=(dp(320), dp(180)),
+            auto_dismiss=True, background_color=(0, 0, 0, 0.5),
+        )
+        modal.add_widget(card)
+        modal.open()
+
+    def _confirm_link(self, url, modal):
+        modal.dismiss()
+        url = url.strip()
+        if not url:
+            return  # nothing entered -- treat as cancel
+
+        # Assume https:// if the user just typed "example.com" -- makes
+        # the link actually openable without them needing to know to
+        # type the scheme themselves.
+        if not (url.startswith("http://") or url.startswith("https://")):
+            url = "https://" + url
+
+        field = self.ids.content_field
+
+        if self._pending_link_selection:
+            selected, start, end = self._pending_link_selection
+            if field.text[start:end] == selected:
+                token = f"{{{{link:{url}|{selected}}}}}"
+                field.text = field.text[:start] + token + field.text[end:]
+                field.cursor = field.get_cursor_from_index(start + len(token))
+                self._pending_link_selection = None
+                return
+
+        # No usable selection -- insert a placeholder link at the cursor.
+        token = f"{{{{link:{url}|Link}}}}"
+        field.insert_text(token)
+
     def make_bold(self):
         self._wrap_selection("**")
 
@@ -723,6 +859,10 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
     def show_preview_mode(self):
         raw = self.ids.content_field.text
         self._preview_content.clear_widgets()
+        # Fresh link map every render -- ref keys only need to be
+        # unique within a single Preview render, not across renders.
+        self._preview_link_map = {}
+        self._link_ref_counter = 0
 
         parts = IMAGE_TOKEN_PATTERN.split(raw)
 
@@ -746,7 +886,7 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
                 self._preview_content.add_widget(img)
             elif part.strip():
                 label = Label(
-                    text=convert_formatting_to_markup(part),
+                    text=self._convert_part_for_preview(part),
                     markup=True,
                     size_hint_y=None,
                     color=(0.29, 0.20, 0.15, 1),
@@ -757,6 +897,7 @@ class NoteEditorScreen(ThemedScreenMixin,MDScreen):
                 )
                 label.bind(width=lambda inst, val: setattr(inst, "text_size", (val, None)))
                 label.bind(texture_size=lambda inst, val: setattr(inst, "height", val[1]))
+                label.bind(on_ref_press=self._on_preview_link_pressed)
                 self._preview_content.add_widget(label)
 
         container = self.ids.content_container
