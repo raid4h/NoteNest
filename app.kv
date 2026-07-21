@@ -245,7 +245,7 @@
                     valign: "middle"
                     text_size: self.size
                     size_hint: 1, 1
-                    pos_hint: {"x": 0, "y": 0}
+                    pos_hint: {"x": 0, "y": -0.1}
 
                 # ── normal mode: sort icons + toggle-select icon ──
                 MDBoxLayout:
@@ -364,7 +364,7 @@
 
             MDLabel:
                 id: header_label
-                text: "My Note"
+                text: " "
                 font_style: "Title"
                 role: "large"
                 theme_text_color: "Custom"

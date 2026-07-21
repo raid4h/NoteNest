@@ -24,7 +24,7 @@ class DeleteConfirmationMixin:
         )
 
         warning_label = MDLabel(
-            text="Delete this note? This can't be undone.",
+            text="Are you sure you want to delete? Notes can be restored in Recently Deleted.",
             halign="center", theme_text_color="Custom", size_hint_y=None,
         )
         warning_label.bind(width=lambda inst, val: setattr(inst, "text_size", (val, None)))
