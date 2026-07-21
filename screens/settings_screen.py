@@ -30,30 +30,34 @@ class SettingsScreen(ThemedScreenMixin, MDScreen):
         "floral_button": ("md_bg_color", BUTTON),
         "cyber_button":  ("md_bg_color", BUTTON),
 
-        # Account
-        "account_card":          ("md_bg_color", CARD_SECONDARY),
-        "account_section_label": ("text_color", ACCENT),
-        "backup_row_label":      ("text_color", TEXT_PRIMARY),
-        "sync_row_label":        ("text_color", TEXT_PRIMARY),
-        "sync_row_subtitle":     ("text_color", TEXT_SECONDARY),
-        "logout_row_label":      ("text_color", TEXT_PRIMARY),
+        # Google Account (identity only — sign in / sign out)
+        "account_card":           ("md_bg_color", CARD_SECONDARY),
+        "account_section_label":  ("text_color", ACCENT),
+        "connect_google_row_label": ("text_color", TEXT_PRIMARY),
+        "connect_google_row_subtitle": ("text_color", TEXT_SECONDARY),
+        "logout_row_label":       ("text_color", TEXT_PRIMARY),
+
+        # Backup & Restore (data actions — this is the backup_manager's UI surface)
+        "backup_card":          ("md_bg_color", CARD_PRIMARY),
+        "backup_section_label": ("text_color", ACCENT),
+        "backup_now_row_label":       ("text_color", TEXT_PRIMARY),
+        "restore_row_label":          ("text_color", TEXT_PRIMARY),
+        "restore_row_subtitle":       ("text_color", TEXT_SECONDARY),
+        "auto_backup_row_label":      ("text_color", TEXT_PRIMARY),
+        "auto_backup_row_subtitle":   ("text_color", TEXT_SECONDARY),
+        "export_row_label":           ("text_color", TEXT_PRIMARY),
+        "import_row_label":           ("text_color", TEXT_PRIMARY),
 
         # Privacy
-        "privacy_card":          ("md_bg_color", CARD_PRIMARY),
+        "privacy_card":          ("md_bg_color", CARD_SECONDARY),
         "privacy_section_label": ("text_color", ACCENT),
         "privacy_row_label":     ("text_color", TEXT_PRIMARY),
         "privacy_row_subtitle":  ("text_color", TEXT_SECONDARY),
 
         # Notifications
-        "notifications_card":          ("md_bg_color", CARD_SECONDARY),
+        "notifications_card":          ("md_bg_color", CARD_PRIMARY),
         "notifications_section_label": ("text_color", ACCENT),
         "notifications_row_label":     ("text_color", TEXT_PRIMARY),
-
-        # Trash
-        "trash_card":          ("md_bg_color", CARD_PRIMARY),
-        "trash_section_label": ("text_color", ACCENT),
-        "trash_row_label":     ("text_color", TEXT_PRIMARY),
-        "trash_row_subtitle":  ("text_color", TEXT_SECONDARY),
 
         # About
         "about_card":                ("md_bg_color", CARD_SECONDARY),
@@ -63,10 +67,13 @@ class SettingsScreen(ThemedScreenMixin, MDScreen):
         "footer_label":              ("text_color", TEXT_SECONDARY),
 
         # chevrons (row-tap affordance)
-        "backup_chevron":         ("icon_color", TEXT_SECONDARY),
+        "connect_google_chevron": ("icon_color", TEXT_SECONDARY),
         "logout_chevron":         ("icon_color", TEXT_SECONDARY),
+        "backup_now_chevron":     ("icon_color", TEXT_SECONDARY),
+        "restore_chevron":        ("icon_color", TEXT_SECONDARY),
+        "export_chevron":         ("icon_color", TEXT_SECONDARY),
+        "import_chevron":         ("icon_color", TEXT_SECONDARY),
         "privacy_chevron":        ("icon_color", TEXT_SECONDARY),
-        "trash_chevron":          ("icon_color", TEXT_SECONDARY),
         "rate_chevron":           ("icon_color", TEXT_SECONDARY),
         "privacy_policy_chevron": ("icon_color", TEXT_SECONDARY),
     }
@@ -84,14 +91,30 @@ class SettingsScreen(ThemedScreenMixin, MDScreen):
     def set_cyberpunk_theme(self):
         theme_manager.set_cyberpunk_theme()
 
-    # ── account ──
-    def backup_data(self):
-        pass
-
-    def toggle_auto_sync(self):
+    # ── google account (identity) ──
+    # Implemented in the backend roadmap's Phase 4 (services/auth_service.py).
+    def connect_google_account(self):
         pass
 
     def logout(self):
+        pass
+
+    # ── backup & restore (data) ──
+    # Implemented in Phase 3 (manual_export.py) and Phase 6
+    # (backup_manager.py, once auth + drive_client exist).
+    def backup_now(self):
+        pass
+
+    def restore_backup(self):
+        pass
+
+    def toggle_auto_backup(self):
+        pass
+
+    def export_to_file(self):
+        pass
+
+    def import_from_file(self):
         pass
 
     # ── privacy ──
@@ -100,10 +123,6 @@ class SettingsScreen(ThemedScreenMixin, MDScreen):
 
     # ── notifications ──
     def toggle_notifications(self):
-        pass
-
-    # ── trash ──
-    def open_trash(self):
         pass
 
     # ── about ──

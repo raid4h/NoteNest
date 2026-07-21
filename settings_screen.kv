@@ -56,39 +56,58 @@
                         role: "medium"
                         adaptive_height: True
 
-                    MDBoxLayout:
-                        spacing: dp(8)
-                        adaptive_height: True
+                    # Horizontally scrollable row: do_scroll_x lets the
+                    # user swipe sideways when the buttons don't all fit;
+                    # do_scroll_y is off since this row never needs to
+                    # scroll vertically. size_hint_y is fixed so the
+                    # ScrollView has a definite height to work within.
+                    ScrollView:
+                        size_hint_y: None
+                        height: dp(48)
+                        do_scroll_x: True
+                        do_scroll_y: False
+                        bar_width: dp(0)
 
-                        MDButton:
-                            id: light_button
-                            style: "filled"
-                            on_release: root.set_light_theme()
-                            MDButtonText:
-                                text: "Light"
+                        MDBoxLayout:
+                            # size_hint_x: None + width: self.minimum_width
+                            # is what lets this row be WIDER than the
+                            # ScrollView's visible area -- without this,
+                            # the row would just shrink to fit and there
+                            # would be nothing to scroll.
+                            size_hint_x: None
+                            width: self.minimum_width
+                            spacing: dp(8)
+                            padding: dp(2), 0
 
-                        MDButton:
-                            id: dark_button
-                            style: "filled"
-                            on_release: root.set_dark_theme()
-                            MDButtonText:
-                                text: "Dark"
+                            MDButton:
+                                id: light_button
+                                style: "filled"
+                                on_release: root.set_light_theme()
+                                MDButtonText:
+                                    text: "Light"
 
-                        MDButton:
-                            id: floral_button
-                            style: "filled"
-                            on_release: root.set_floral_theme()
-                            MDButtonText:
-                                text: "Floral"
+                            MDButton:
+                                id: dark_button
+                                style: "filled"
+                                on_release: root.set_dark_theme()
+                                MDButtonText:
+                                    text: "Dark"
 
-                        MDButton:
-                            id: cyber_button
-                            style: "filled"
-                            on_release: root.set_cyberpunk_theme()
-                            MDButtonText:
-                                text: "Cyberpunk"
+                            MDButton:
+                                id: floral_button
+                                style: "filled"
+                                on_release: root.set_floral_theme()
+                                MDButtonText:
+                                    text: "Floral"
 
-                # ── account card: backup, sync, log out ──
+                            MDButton:
+                                id: cyber_button
+                                style: "filled"
+                                on_release: root.set_cyberpunk_theme()
+                                MDButtonText:
+                                    text: "Cyberpunk"
+
+                # ── google account card: identity only ──
                 MDCard:
                     id: account_card
                     orientation: "vertical"
@@ -99,33 +118,13 @@
 
                     MDLabel:
                         id: account_section_label
-                        text: "Account"
+                        text: "Google Account"
                         theme_text_color: "Custom"
                         font_style: "Body"
                         role: "medium"
                         adaptive_height: True
 
-                    # -- backup row --
-                    MDBoxLayout:
-                        size_hint_y: None
-                        height: dp(40)
-                        spacing: dp(8)
-
-                        MDLabel:
-                            id: backup_row_label
-                            text: "Backup"
-                            theme_text_color: "Custom"
-                            font_style: "Title"
-                            role: "small"
-
-                        MDIconButton:
-                            id: backup_chevron
-                            icon: "chevron-right"
-                            theme_icon_color: "Custom"
-                            pos_hint: {"center_y": 0.5}
-                            on_release: root.backup_data()
-
-                    # -- sync row (label + subtitle + switch) --
+                    # -- connect google row (label + subtitle + chevron) --
                     MDBoxLayout:
                         size_hint_y: None
                         height: dp(56)
@@ -136,24 +135,27 @@
                             size_hint_x: 1
 
                             MDLabel:
-                                id: sync_row_label
-                                text: "Auto sync"
+                                id: connect_google_row_label
+                                text: "Connect Google account"
                                 theme_text_color: "Custom"
                                 font_style: "Title"
                                 role: "small"
                                 adaptive_height: True
 
                             MDLabel:
-                                id: sync_row_subtitle
-                                text: "Automatically sync notes when online"
+                                id: connect_google_row_subtitle
+                                text: "Sign in to enable cloud backup"
                                 theme_text_color: "Custom"
                                 font_style: "Body"
                                 role: "small"
                                 adaptive_height: True
 
-                        MDSwitch:
+                        MDIconButton:
+                            id: connect_google_chevron
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
                             pos_hint: {"center_y": 0.5}
-                            on_active: root.toggle_auto_sync()
+                            on_release: root.connect_google_account()
 
                     # -- log out row --
                     MDBoxLayout:
@@ -174,6 +176,146 @@
                             theme_icon_color: "Custom"
                             pos_hint: {"center_y": 0.5}
                             on_release: root.logout()
+
+                # ── backup & restore card: data actions ──
+                MDCard:
+                    id: backup_card
+                    orientation: "vertical"
+                    padding: dp(16)
+                    spacing: dp(14)
+                    adaptive_height: True
+                    radius: [16]
+
+                    MDLabel:
+                        id: backup_section_label
+                        text: "Backup & Restore"
+                        theme_text_color: "Custom"
+                        font_style: "Body"
+                        role: "medium"
+                        adaptive_height: True
+
+                    # -- back up now row --
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(40)
+                        spacing: dp(8)
+
+                        MDLabel:
+                            id: backup_now_row_label
+                            text: "Back up now"
+                            theme_text_color: "Custom"
+                            font_style: "Title"
+                            role: "small"
+
+                        MDIconButton:
+                            id: backup_now_chevron
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            pos_hint: {"center_y": 0.5}
+                            on_release: root.backup_now()
+
+                    # -- restore row (label + subtitle + chevron) --
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(56)
+                        spacing: dp(8)
+
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            size_hint_x: 1
+
+                            MDLabel:
+                                id: restore_row_label
+                                text: "Restore backup"
+                                theme_text_color: "Custom"
+                                font_style: "Title"
+                                role: "small"
+                                adaptive_height: True
+
+                            MDLabel:
+                                id: restore_row_subtitle
+                                text: "Replace local data with your latest backup"
+                                theme_text_color: "Custom"
+                                font_style: "Body"
+                                role: "small"
+                                adaptive_height: True
+
+                        MDIconButton:
+                            id: restore_chevron
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            pos_hint: {"center_y": 0.5}
+                            on_release: root.restore_backup()
+
+                    # -- auto backup row (label + subtitle + switch) --
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(56)
+                        spacing: dp(8)
+
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            size_hint_x: 1
+
+                            MDLabel:
+                                id: auto_backup_row_label
+                                text: "Auto backup"
+                                theme_text_color: "Custom"
+                                font_style: "Title"
+                                role: "small"
+                                adaptive_height: True
+
+                            MDLabel:
+                                id: auto_backup_row_subtitle
+                                text: "Automatically back up when online"
+                                theme_text_color: "Custom"
+                                font_style: "Body"
+                                role: "small"
+                                adaptive_height: True
+
+                        MDSwitch:
+                            pos_hint: {"center_y": 0.5}
+                            on_active: root.toggle_auto_backup()
+
+                    # -- export row --
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(40)
+                        spacing: dp(8)
+
+                        MDLabel:
+                            id: export_row_label
+                            text: "Export to file"
+                            theme_text_color: "Custom"
+                            font_style: "Title"
+                            role: "small"
+
+                        MDIconButton:
+                            id: export_chevron
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            pos_hint: {"center_y": 0.5}
+                            on_release: root.export_to_file()
+
+                    # -- import row --
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(40)
+                        spacing: dp(8)
+
+                        MDLabel:
+                            id: import_row_label
+                            text: "Import from file"
+                            theme_text_color: "Custom"
+                            font_style: "Title"
+                            role: "small"
+
+                        MDIconButton:
+                            id: import_chevron
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            pos_hint: {"center_y": 0.5}
+                            on_release: root.import_from_file()
 
                 # ── privacy card ──
                 MDCard:
@@ -256,55 +398,6 @@
                         MDSwitch:
                             pos_hint: {"center_y": 0.5}
                             on_active: root.toggle_notifications()
-
-                # ── trash card ──
-                MDCard:
-                    id: trash_card
-                    orientation: "vertical"
-                    padding: dp(16)
-                    spacing: dp(12)
-                    adaptive_height: True
-                    radius: [16]
-
-                    MDLabel:
-                        id: trash_section_label
-                        text: "Trash"
-                        theme_text_color: "Custom"
-                        font_style: "Body"
-                        role: "medium"
-                        adaptive_height: True
-
-                    MDBoxLayout:
-                        size_hint_y: None
-                        height: dp(56)
-                        spacing: dp(8)
-
-                        MDBoxLayout:
-                            orientation: "vertical"
-                            size_hint_x: 1
-
-                            MDLabel:
-                                id: trash_row_label
-                                text: "Trash"
-                                theme_text_color: "Custom"
-                                font_style: "Title"
-                                role: "small"
-                                adaptive_height: True
-
-                            MDLabel:
-                                id: trash_row_subtitle
-                                text: "Deleted notes are kept here"
-                                theme_text_color: "Custom"
-                                font_style: "Body"
-                                role: "small"
-                                adaptive_height: True
-
-                        MDIconButton:
-                            id: trash_chevron
-                            icon: "chevron-right"
-                            theme_icon_color: "Custom"
-                            pos_hint: {"center_y": 0.5}
-                            on_release: root.open_trash()
 
                 # ── about card ──
                 MDCard:
