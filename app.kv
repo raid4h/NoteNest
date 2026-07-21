@@ -470,7 +470,6 @@
                 id: word_count_label
                 text: "0 words · 0 chars"
                 theme_text_color: "Custom"
-                text_color: 0.54, 0.35, 0.17, 1
                 font_style: "Body"
                 role: "small"
                 halign: "right"
@@ -498,7 +497,6 @@
                 spacing: dp(6)
                 radius: [16]
                 elevation: 1
-                md_bg_color: 0.92, 0.84, 0.66, 1
 
                 TextInput:
                     id: search_query_field
@@ -509,9 +507,6 @@
                     background_normal: ""
                     background_active: ""
                     background_color: 0, 0, 0, 0
-                    foreground_color: 0.29, 0.20, 0.15, 1
-                    hint_text_color: 0.54, 0.35, 0.17, 1
-                    cursor_color: 0.29, 0.20, 0.15, 1
                     padding: dp(6), dp(6), dp(6), dp(6)
                     on_text: app.root.get_screen('note_editor').on_search_text_change(self.text)
 
@@ -519,7 +514,6 @@
                     id: search_match_label
                     text: "0/0"
                     theme_text_color: "Custom"
-                    text_color: 0.29, 0.20, 0.15, 1
                     size_hint_x: None
                     width: dp(42)
                     halign: "center"
@@ -528,7 +522,6 @@
                     id: search_prev_button
                     icon: "chevron-up"
                     theme_icon_color: "Custom"
-                    icon_color: 0.29, 0.20, 0.15, 1
                     size_hint: None, None
                     size: dp(36), dp(36)
                     on_release: app.root.get_screen('note_editor').search_prev()
@@ -537,7 +530,6 @@
                     id: search_next_button
                     icon: "chevron-down"
                     theme_icon_color: "Custom"
-                    icon_color: 0.29, 0.20, 0.15, 1
                     size_hint: None, None
                     size: dp(36), dp(36)
                     on_release: app.root.get_screen('note_editor').search_next()
@@ -546,7 +538,6 @@
                     id: search_close_button
                     icon: "close"
                     theme_icon_color: "Custom"
-                    icon_color: 0.29, 0.20, 0.15, 1
                     size_hint: None, None
                     size: dp(36), dp(36)
                     on_release: app.root.get_screen('note_editor').toggle_search()
@@ -725,37 +716,32 @@
                 icon: "format-font"
                 theme_icon_color: "Custom"
                 on_release: app.root.get_screen('note_editor').cycle_font()
-                
+
 <RecentlyDeletedScreen>:
     name: "recently_deleted"
-    # Temporary hardcoded colors matching the rest of the app's palette
-    # -- this screen isn't wired into Nafisa's ThemedScreenMixin/
-    # THEME_MAP system yet, so without this it falls back to KivyMD's
-    # raw default background, which is black.
-    md_bg_color: 0.97, 0.95, 0.90, 1
 
     MDBoxLayout:
         orientation: "vertical"
         size_hint: 1, 1
 
         MDFloatLayout:
+            id: top_bar
             size_hint_y: None
             height: "56dp"
-            md_bg_color: 0.92, 0.84, 0.66, 1
 
             MDIconButton:
+                id: back_button
                 icon: "arrow-left"
                 theme_icon_color: "Custom"
-                icon_color: 0.29, 0.20, 0.15, 1
                 pos_hint: {"x": 0, "center_y": 0.5}
                 on_release: root.go_home()
 
             MDLabel:
+                id: header_label
                 text: "Recently Deleted"
                 font_style: "Title"
                 role: "large"
                 theme_text_color: "Custom"
-                text_color: 0.29, 0.20, 0.15, 1
                 halign: "center"
                 valign: "middle"
                 text_size: self.size

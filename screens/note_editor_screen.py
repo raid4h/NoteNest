@@ -56,28 +56,37 @@ class NoteEditorScreen(
     show_search = BooleanProperty(False)
     is_compact = BooleanProperty(False)
 
+    # NOTE: every key below was checked against the actual ids in
+    # app.kv's <NoteEditorScreen>: rule. header_bar/title_bar/
+    # decrease_font_button/increase_font_button/cycle_font_button were
+    # wrong (the real ids are top_bar/title_field_container/
+    # font_decrease_button/font_increase_button/font_cycle_button) --
+    # fixed below. The nine formatting-toolbar entries (bold_button,
+    # italic_button, underline_button, highlight_button, align_*,
+    # font_* aside from the three above) have been REMOVED entirely --
+    # those ids now live inside FormattingToolbar's own self.ids
+    # (it's a separate widget class), so they were never reachable
+    # from here and did nothing. See on_theme_applied below for how
+    # the toolbar is themed instead.
     THEME_MAP = {
         "self":                ("md_bg_color", BACKGROUND),
-        "header_bar":          ("md_bg_color", CARD_SECONDARY),
+        "top_bar":             ("md_bg_color", CARD_SECONDARY),
         "back_button":         ("icon_color", TEXT_PRIMARY),
         "header_label":        ("text_color", TEXT_PRIMARY),
+        "search_button":       ("icon_color", TEXT_PRIMARY),
         "image_button":        ("icon_color", TEXT_PRIMARY),
         "preview_button":      ("icon_color", TEXT_PRIMARY),
+        "export_button":       ("icon_color", TEXT_PRIMARY),
         "duplicate_button":    ("icon_color", TEXT_PRIMARY),
         "delete_button":       ("icon_color", TEXT_PRIMARY),
         "save_button":         ("icon_color", TEXT_PRIMARY),
-        "title_bar":           ("md_bg_color", BACKGROUND),
-        "toolbar":             ("md_bg_color", BACKGROUND),
-        "bold_button":         ("icon_color", TEXT_PRIMARY),
-        "italic_button":       ("icon_color", TEXT_PRIMARY),
-        "underline_button":    ("icon_color", TEXT_PRIMARY),
-        "highlight_button":    ("icon_color", TEXT_PRIMARY),
-        "align_left_button":   ("icon_color", TEXT_PRIMARY),
-        "align_center_button": ("icon_color", TEXT_PRIMARY),
-        "align_right_button":  ("icon_color", TEXT_PRIMARY),
-        "decrease_font_button": ("icon_color", TEXT_PRIMARY),
-        "increase_font_button": ("icon_color", TEXT_PRIMARY),
-        "cycle_font_button":   ("icon_color", TEXT_PRIMARY),
+        "title_field_container": ("md_bg_color", BACKGROUND),
+        "word_count_label":    ("text_color", TEXT_SECONDARY),
+        "search_card":         ("md_bg_color", CARD_SECONDARY),
+        "search_match_label":  ("text_color", TEXT_PRIMARY),
+        "search_prev_button":  ("icon_color", TEXT_PRIMARY),
+        "search_next_button":  ("icon_color", TEXT_PRIMARY),
+        "search_close_button": ("icon_color", TEXT_PRIMARY),
         "content_card":        ("md_bg_color", CARD_PRIMARY),
     }
 
@@ -146,6 +155,30 @@ class NoteEditorScreen(
             field.hint_text_color = theme_manager.get_color(TEXT_SECONDARY)
             field.cursor_color = theme_manager.get_color(TEXT_PRIMARY)
             field.selection_color = self._faded(theme_manager.get_color(ACCENT), 0.4)
+
+        # search_query_field is also a plain TextInput -- same
+        # multi-property situation as content_field, so THEME_MAP
+        # (one property per id) can't reach it either. background_color
+        # deliberately stays transparent (0, 0, 0, 0) per the .kv
+        # comment -- that's intentional layering, not a missed color.
+        search_field = self.ids.get("search_query_field")
+        if search_field is not None:
+            search_field.foreground_color = theme_manager.get_color(TEXT_PRIMARY)
+            search_field.hint_text_color = theme_manager.get_color(TEXT_SECONDARY)
+            search_field.cursor_color = theme_manager.get_color(TEXT_PRIMARY)
+
+        # FormattingToolbar is its own widget class with its own
+        # self.ids -- THEME_MAP can never reach into it, the same way
+        # THEME_MAP can't reach DashboardTile's or NoteCard's internal
+        # ids. It needs its own apply_theme() method (mirroring that
+        # same pattern) before this actually does anything -- the
+        # hasattr guard means this is safe to leave in now and have it
+        # start working the moment that method exists, same as Home's
+        # dashboard-tile loop.
+        toolbar = self.ids.get("formatting_toolbar")
+        if toolbar is not None and hasattr(toolbar, "apply_theme"):
+            toolbar.apply_theme()
+
         self._refresh_preview_if_active()
 
     def _reset_editing_state(self):

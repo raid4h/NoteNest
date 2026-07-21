@@ -14,13 +14,27 @@ from kivy.uix.boxlayout import BoxLayout
 import trash_store
 from database.notes_queries import create_notes
 
+from theme.theme_manager import theme_manager
+from theme.themed_screen import ThemedScreenMixin
+from theme.palettes import BACKGROUND, CARD_PRIMARY, CARD_SECONDARY, TEXT_PRIMARY, TEXT_SECONDARY
 
-class RecentlyDeletedScreen(MDScreen):
+
+class RecentlyDeletedScreen(ThemedScreenMixin, MDScreen):
+
+    THEME_MAP = {
+        "self":         ("md_bg_color", BACKGROUND),
+        "top_bar":      ("md_bg_color", CARD_SECONDARY),
+        "back_button":  ("icon_color", TEXT_PRIMARY),
+        "header_label": ("text_color", TEXT_PRIMARY),
+    }
 
     def go_home(self):
         self.manager.current = "notes"
 
     def on_enter(self):
+        self.load_trash()
+
+    def on_theme_applied(self):
         self.load_trash()
 
     def load_trash(self):
@@ -32,7 +46,7 @@ class RecentlyDeletedScreen(MDScreen):
                 text="No recently deleted notes.",
                 halign="center",
                 theme_text_color="Custom",
-                text_color=(0.54, 0.35, 0.17, 1),
+                text_color=theme_manager.get_color(TEXT_SECONDARY),
                 size_hint_y=None,
                 height=dp(60),
             )
@@ -43,10 +57,6 @@ class RecentlyDeletedScreen(MDScreen):
             self.ids.trash_list.add_widget(self._build_trash_card(entry))
 
     def _build_trash_card(self, entry):
-        # Fixed height, sized generously enough to actually fit title +
-        # deleted-at timestamp + button row + all padding/spacing --
-        # the original dp(90) was too small for that content, so it
-        # overflowed the card's visible bounds instead of being clipped.
         card = MDCard(
             orientation="vertical",
             padding=dp(14),
@@ -55,7 +65,7 @@ class RecentlyDeletedScreen(MDScreen):
             height=dp(140),
             radius=[14],
             elevation=1,
-            md_bg_color=(0.97, 0.95, 0.90, 1),
+            md_bg_color=theme_manager.get_color(CARD_PRIMARY),
         )
 
         title_label = MDLabel(
@@ -63,7 +73,7 @@ class RecentlyDeletedScreen(MDScreen):
             font_style="Title",
             role="medium",
             theme_text_color="Custom",
-            text_color=(0.29, 0.20, 0.15, 1),
+            text_color=theme_manager.get_color(TEXT_PRIMARY),
             adaptive_height=True,
             shorten=True,
             shorten_from="right",
@@ -79,7 +89,7 @@ class RecentlyDeletedScreen(MDScreen):
             font_style="Body",
             role="small",
             theme_text_color="Custom",
-            text_color=(0.65, 0.52, 0.35, 1),
+            text_color=theme_manager.get_color(TEXT_SECONDARY),
             adaptive_height=True,
         )
         card.add_widget(deleted_label)
@@ -95,13 +105,13 @@ class RecentlyDeletedScreen(MDScreen):
         restore_button = MDIconButton(
             icon="delete-restore",
             theme_icon_color="Custom",
-            icon_color=(0.29, 0.20, 0.15, 1),
+            icon_color=theme_manager.get_color(TEXT_PRIMARY),
         )
         restore_button.bind(on_release=lambda *_: self.restore_note(entry["trash_id"]))
         restore_label = MDLabel(
             text="Restore",
             theme_text_color="Custom",
-            text_color=(0.29, 0.20, 0.15, 1),
+            text_color=theme_manager.get_color(TEXT_PRIMARY),
             font_style="Body",
             role="small",
             valign="middle",
@@ -114,13 +124,13 @@ class RecentlyDeletedScreen(MDScreen):
         delete_forever_button = MDIconButton(
             icon="delete-forever",
             theme_icon_color="Custom",
-            icon_color=(0.29, 0.20, 0.15, 1),
+            icon_color=theme_manager.get_color(TEXT_PRIMARY),
         )
         delete_forever_button.bind(on_release=lambda *_: self.delete_forever(entry["trash_id"]))
         delete_forever_label = MDLabel(
             text="Delete Forever",
             theme_text_color="Custom",
-            text_color=(0.29, 0.20, 0.15, 1),
+            text_color=theme_manager.get_color(TEXT_PRIMARY),
             font_style="Body",
             role="small",
             valign="middle",
