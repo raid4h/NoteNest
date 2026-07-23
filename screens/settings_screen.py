@@ -25,10 +25,10 @@ class SettingsScreen(ThemedScreenMixin, MDScreen):
         # Theme
         "theme_card":          ("md_bg_color", CARD_PRIMARY),
         "theme_section_label": ("text_color", ACCENT),
-        "light_button":  ("md_bg_color", BUTTON),
-        "dark_button":   ("md_bg_color", BUTTON),
-        "floral_button": ("md_bg_color", BUTTON),
-        "cyber_button":  ("md_bg_color", BUTTON),
+        "cream_button":      ("md_bg_color", BUTTON),
+        "dark_button":       ("md_bg_color", BUTTON),
+        "default_button":    ("md_bg_color", BUTTON),
+        "monochrome_button": ("md_bg_color", BUTTON),
 
         # Google Account (identity only — sign in / sign out)
         "account_card":           ("md_bg_color", CARD_SECONDARY),
@@ -79,17 +79,17 @@ class SettingsScreen(ThemedScreenMixin, MDScreen):
     }
 
     # ── theme ──
-    def set_light_theme(self):
-        theme_manager.set_light_theme()
+    def set_cream_theme(self):
+        theme_manager.set_cream_theme()
 
     def set_dark_theme(self):
         theme_manager.set_dark_theme()
 
-    def set_floral_theme(self):
-        theme_manager.set_floral_theme()
+    def set_default_theme(self):
+        theme_manager.set_default_theme()
 
-    def set_cyberpunk_theme(self):
-        theme_manager.set_cyberpunk_theme()
+    def set_monochrome_theme(self):
+        theme_manager.set_monochrome_theme()
 
     # ── google account (identity) ──
     # Implemented in the backend roadmap's Phase 4 (services/auth_service.py).

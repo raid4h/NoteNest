@@ -1,5 +1,16 @@
+# palettes.py
+#
+# Each theme is a dictionary mapping a SEMANTIC TOKEN (a plain string
+# describing a role, e.g. "background") to the hex color that role
+# should have in that theme.
+#
+# The token names below must be IDENTICAL across every theme dict.
+# That's what lets ThemeManager swap themes safely: it just looks up
+# the same token in a different dictionary.
 
-LIGHT = {
+# Warm, soothing "oat milk latte" palette — cream base with a
+# consistent warm-brown undertone running through every token.
+CREAM = {
     "background":     "#FBF3E4",
     "card_primary":    "#F1E4D0",
     "card_secondary":  "#E8D8C0",
@@ -23,7 +34,9 @@ DARK = {
     "button_text":     "#222238",
 }
 
-FLORAL = {
+# This is the APP'S DEFAULT theme (formerly "Floral") — periwinkle-
+# lavender base with soft pink/coral accents.
+DEFAULT = {
     "background":      "#DCD6F5",
     "card_primary":    "#F8F5FC",
     "card_secondary":  "#F5C7DC",
@@ -35,16 +48,20 @@ FLORAL = {
     "button_text":     "#FFF9FC",
 }
 
-CYBERPUNK = {
-    "background":      "#0A0A12",
-    "card_primary":    "#1A1B2E",
-    "card_secondary":  "#252742",
-    "border":          "#7B2EFF",
-    "accent":          "#F2F5FF",
-    "text_secondary":  "#FF2E9F",
-    "button":          "#2D7CFF",
-    "text_primary":    "#00E5FF",
-    "button_text":     "#0A0A12",
+# True grayscale — every value is a shade of gray, no hue at all,
+# distinct from the old Cyberpunk's neon purple/pink/blue palette.
+# A light button on a near-black background gives it a deliberate,
+# high-contrast "monochrome poster" feel rather than a colorful one.
+MONOCHROME = {
+    "background":      "#121212",
+    "card_primary":    "#1E1E1E",
+    "card_secondary":  "#2A2A2A",
+    "border":          "#3D3D3D",
+    "accent":          "#9E9E9E",
+    "text_secondary":  "#B0B0B0",
+    "button":          "#E0E0E0",
+    "text_primary":    "#FFFFFF",
+    "button_text":     "#121212",
 }
 
 # --- Semantic token constants ---

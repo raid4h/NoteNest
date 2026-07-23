@@ -1,42 +1,42 @@
-
-# ThemeManager is now an EventDispatcher, which means it can hold
-# Kivy Properties. theme_name is a StringProperty, so any object
-# can "subscribe" to it via .bind() and get notified automatically
+# ThemeManager is an EventDispatcher, which means it can hold Kivy
+# Properties. theme_name is a StringProperty, so any object can
+# "subscribe" to it via .bind() and get notified automatically
 # whenever the theme changes — no manual refresh loop needed.
 
 from kivy.event import EventDispatcher
 from kivy.properties import StringProperty
 
-from theme.palettes import LIGHT, DARK, FLORAL, CYBERPUNK
+from theme.palettes import CREAM, DARK, DEFAULT, MONOCHROME
 
 _PALETTES = {
-    "light": LIGHT,
+    "cream": CREAM,
     "dark": DARK,
-    "floral": FLORAL,
-    "cyberpunk": CYBERPUNK,
+    "default": DEFAULT,
+    "monochrome": MONOCHROME,
 }
 
 
 class ThemeManager(EventDispatcher):
 
-    #new stuff .bind()
-    theme_name = StringProperty("light")
+    # "default" is now the app's actual starting theme, per your
+    # instruction to make the former Floral palette the default.
+    theme_name = StringProperty("default")
 
     def set_theme(self, name):
         if name in _PALETTES:
             self.theme_name = name
 
-    def set_light_theme(self):
-        self.set_theme("light")
+    def set_cream_theme(self):
+        self.set_theme("cream")
 
     def set_dark_theme(self):
         self.set_theme("dark")
 
-    def set_floral_theme(self):
-        self.set_theme("floral")
+    def set_default_theme(self):
+        self.set_theme("default")
 
-    def set_cyberpunk_theme(self):
-        self.set_theme("cyberpunk")
+    def set_monochrome_theme(self):
+        self.set_theme("monochrome")
 
     def get_color(self, token):
         return _PALETTES[self.theme_name].get(token, token)

@@ -56,11 +56,6 @@
                         role: "medium"
                         adaptive_height: True
 
-                    # Horizontally scrollable row: do_scroll_x lets the
-                    # user swipe sideways when the buttons don't all fit;
-                    # do_scroll_y is off since this row never needs to
-                    # scroll vertically. size_hint_y is fixed so the
-                    # ScrollView has a definite height to work within.
                     ScrollView:
                         size_hint_y: None
                         height: dp(48)
@@ -80,11 +75,11 @@
                             padding: dp(2), 0
 
                             MDButton:
-                                id: light_button
+                                id: cream_button
                                 style: "filled"
-                                on_release: root.set_light_theme()
+                                on_release: root.set_cream_theme()
                                 MDButtonText:
-                                    text: "Light"
+                                    text: "Cream"
 
                             MDButton:
                                 id: dark_button
@@ -94,18 +89,18 @@
                                     text: "Dark"
 
                             MDButton:
-                                id: floral_button
+                                id: default_button
                                 style: "filled"
-                                on_release: root.set_floral_theme()
+                                on_release: root.set_default_theme()
                                 MDButtonText:
-                                    text: "Floral"
+                                    text: "Default"
 
                             MDButton:
-                                id: cyber_button
+                                id: monochrome_button
                                 style: "filled"
-                                on_release: root.set_cyberpunk_theme()
+                                on_release: root.set_monochrome_theme()
                                 MDButtonText:
-                                    text: "Cyberpunk"
+                                    text: "Monochrome"
 
                 # ── google account card: identity only ──
                 MDCard:
