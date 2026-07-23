@@ -9,9 +9,10 @@ from kivy.uix.boxlayout import BoxLayout
 from widgets.note_card import NoteCard
 from database.notes_queries import get_all_notes, search_notes as db_search_notes, archive_notes, pin_notes
 from screens.notes.helpers import format_last_edited, clean_preview_text
+import user_prefs
 
 DEFAULT_NOTEBOOK_ID = 1
-GRID_ROW_HEIGHT = dp(180)
+GRID_ROW_HEIGHT = dp(210)
 
 
 class NotesListMixin:
@@ -70,6 +71,7 @@ class NotesListMixin:
 
     def toggle_view_mode(self):
         self.view_mode = "grid" if self.view_mode == "list" else "list"
+        user_prefs.set_pref("view_mode", self.view_mode)
         self.load_notes()
 
     def sort_notes(self, mode):

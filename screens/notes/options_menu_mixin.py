@@ -24,17 +24,16 @@ class OptionsMenuMixin:
     def open_options_menu(self):
         button = self.ids.options_button
 
-        # to_window(0, 0) converts the button's OWN local origin
-        # (its bottom-left corner) into absolute window coordinates.
-        # Passing button.pos instead -- its position within its
-        # PARENT, a different coordinate space -- double-applies an
-        # offset, which is why the menu wasn't landing near the
-        # button before. This is the corrected call.
         button_x, button_y = button.to_window(0, 0)
 
         menu_width = dp(220)
         row_height = dp(46)
-        menu_height = row_height * 4
+        # Extra space above the first row and below the last one, so
+        # "View as Grid" doesn't sit flush against the top edge of the
+        # rounded card.
+        top_padding = dp(10)
+        bottom_padding = dp(6)
+        menu_height = (row_height * 4) + top_padding + bottom_padding
 
         target_x = min(button_x + button.width - menu_width, Window.width - menu_width - dp(8))
         target_x = max(target_x, dp(8))
@@ -44,6 +43,7 @@ class OptionsMenuMixin:
             orientation="vertical",
             size_hint=(None, None),
             size=(menu_width, menu_height),
+            padding=(dp(4), top_padding, dp(4), bottom_padding),
             radius=[14],
             elevation=4,
             md_bg_color=(0.97, 0.95, 0.90, 1),

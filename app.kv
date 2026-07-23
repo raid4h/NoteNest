@@ -127,7 +127,7 @@
     padding: "16dp"
     spacing: "6dp"
     size_hint_y: None
-    height: dp(180) if root.grid_mode else dp(100)
+    height: dp(210) if root.grid_mode else dp(100)
     radius: [24, 24, 24, 24]
     ripple_behavior: True
     elevation: 3
@@ -163,7 +163,7 @@
                 # single-line in list mode -- this was already fixed
                 # once before, then accidentally reverted when the pin
                 # icon's card rewrite used an older version of this rule.
-                max_lines: 2 if root.grid_mode else 1
+                max_lines: 3 if root.grid_mode else 1
                 theme_text_color: "Custom"
                 text_color: 0.29, 0.20, 0.15, 1
 
@@ -272,38 +272,15 @@
                         size_hint_y: 1
 
                 # ── normal mode: single overflow menu button,
-                MDBoxLayout:
-                    # A plain circle wrapper holding the background --
-                    # simpler and more reliable than relying on
-                    # MDIconButton's own internal background theming,
-                    # which doesn't reflect Python-side color changes
-                    # consistently. Same md_bg_color pattern already
-                    # used successfully everywhere else in this app.
-                    id: options_button_wrapper
-                    size_hint: None, None
-                    size: dp(40), dp(40)
-                    pos_hint: {"center_y": 0.5}
-                    radius: [dp(20)]
-                    # Without this, KivyMD keeps silently applying its
-                    # own default background color and ignores our
-                    # md_bg_color entirely -- same underlying issue as
-                    # the earlier icon_color/theme_icon_color fix.
-                    theme_bg_color: "Custom"
-                    md_bg_color: 0.92, 0.84, 0.66, 0.6
+                MDIconButton:
+                    id: options_button
+                    icon: "dots-vertical"
+                    theme_icon_color: "Custom"
+                    size_hint_x: None
+                    width: dp(48) if not root.selection_mode else 0
                     opacity: 0 if root.selection_mode else 1
                     disabled: root.selection_mode
-                    
-                    MDIconButton:
-                        id: options_button
-                        icon: "dots-vertical"
-                        theme_icon_color: "Custom"
-                        theme_bg_color: "Custom"
-                        # Fully transparent -- this button now only
-                        # ever draws the icon itself; the wrapper above
-                        # owns the visible circle.
-                        md_bg_color: 0, 0, 0, 0
-                        size_hint: 1, 1
-                        on_release: root.open_options_menu()
+                    on_release: root.open_options_menu()
 
                 # ── selection mode: count + bulk delete + cancel ──
                 MDBoxLayout:
@@ -408,13 +385,15 @@
 
             MDLabel:
                 id: header_label
-                text: " "
-                font_style: "Title"
-                role: "large"
+                # Kept invisible/zero-width instead of deleted -- this
+                # id is still referenced by Nafisa's THEME_MAP, so
+                # removing the widget entirely could break her theming
+                # code. This way it simply takes up no layout space.
+                text: ""
                 theme_text_color: "Custom"
-                size_hint_x: 1
-                shorten: True
-                shorten_from: "right"
+                size_hint_x: None
+                width: 0
+                opacity: 0
 
             # ── "view" tools: search, insert image, preview toggle ──
             # ── icon cluster: scrolls horizontally instead of being

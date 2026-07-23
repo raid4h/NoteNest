@@ -14,6 +14,7 @@ from theme.palettes import BACKGROUND, TEXT_PRIMARY, CARD_SECONDARY, ACCENT
 from screens.notes.list_mixin import NotesListMixin
 from screens.notes.selection_mixin import SelectionMixin
 from screens.notes.options_menu_mixin import OptionsMenuMixin
+import user_prefs
 
 
 class NotesScreen(
@@ -41,6 +42,9 @@ class NotesScreen(
         super().__init__(**kwargs)
         # Ids of notes currently checked while in bulk-select mode.
         self.selected_note_ids = set()
+        # Restore whichever view mode (list/grid) the user last chose,
+        # instead of always starting back at the default.
+        self.view_mode = user_prefs.get_pref("view_mode")
 
     def go_home(self):
         self.manager.current = "home"
@@ -56,15 +60,6 @@ class NotesScreen(
             if hasattr(card, "apply_theme"):
                 card.apply_theme()
 
-        # The circle behind "⋮" needs a faded/translucent theme color,
-        # not the flat solid color a normal THEME_MAP entry would give
-        # it -- set explicitly here instead, same _faded() pattern
-        # already used for content_field's selection color in the
-        # note editor.
-        if "options_button_wrapper" in self.ids:
-            self.ids.options_button_wrapper.md_bg_color = self._faded(
-                theme_manager.get_color(CARD_SECONDARY), 0.6
-            )
 
     def open_note_editor(self, note_id=None):
         editor = self.manager.get_screen("note_editor")
