@@ -70,7 +70,6 @@ class NoteEditorScreen(
     # the toolbar is themed instead.
     THEME_MAP = {
         "self":                ("md_bg_color", BACKGROUND),
-        "top_bar":             ("md_bg_color", CARD_SECONDARY),
         "back_button":         ("icon_color", TEXT_PRIMARY),
         "header_label":        ("text_color", TEXT_PRIMARY),
         "search_button":       ("icon_color", TEXT_PRIMARY),

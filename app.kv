@@ -159,10 +159,10 @@
                 adaptive_height: True
                 shorten: True
                 shorten_from: "right"
-                # Allows the title to wrap onto a second line in grid
-                # mode (where cards are narrower), instead of being
-                # truncated after just a few characters on one line.
-                # List mode is untouched -- stays single-line.
+                # Wraps to 2 lines in grid mode (narrower cards), stays
+                # single-line in list mode -- this was already fixed
+                # once before, then accidentally reverted when the pin
+                # icon's card rewrite used an older version of this rule.
                 max_lines: 2 if root.grid_mode else 1
                 theme_text_color: "Custom"
                 text_color: 0.29, 0.20, 0.15, 1
@@ -272,25 +272,38 @@
                         size_hint_y: 1
 
                 # ── normal mode: single overflow menu button,
-                #    replacing the old two sort icons ──
-                MDIconButton:
-                    id: options_button
-                    icon: "dots-vertical"
-                    theme_icon_color: "Custom"
-                    theme_bg_color: "Custom"
-                    # Subtle shaded circle behind the icon, matching the
-                    # app's warm palette -- explicit equal width/height
-                    # plus a radius equal to half that size is what
-                    # makes it render as a full circle rather than a
-                    # rounded rectangle.
-                    md_bg_color: 0.92, 0.84, 0.66, 0.6
-                    radius: [dp(20)]
+                MDBoxLayout:
+                    # A plain circle wrapper holding the background --
+                    # simpler and more reliable than relying on
+                    # MDIconButton's own internal background theming,
+                    # which doesn't reflect Python-side color changes
+                    # consistently. Same md_bg_color pattern already
+                    # used successfully everywhere else in this app.
+                    id: options_button_wrapper
                     size_hint: None, None
                     size: dp(40), dp(40)
                     pos_hint: {"center_y": 0.5}
+                    radius: [dp(20)]
+                    # Without this, KivyMD keeps silently applying its
+                    # own default background color and ignores our
+                    # md_bg_color entirely -- same underlying issue as
+                    # the earlier icon_color/theme_icon_color fix.
+                    theme_bg_color: "Custom"
+                    md_bg_color: 0.92, 0.84, 0.66, 0.6
                     opacity: 0 if root.selection_mode else 1
                     disabled: root.selection_mode
-                    on_release: root.open_options_menu()
+                    
+                    MDIconButton:
+                        id: options_button
+                        icon: "dots-vertical"
+                        theme_icon_color: "Custom"
+                        theme_bg_color: "Custom"
+                        # Fully transparent -- this button now only
+                        # ever draws the icon itself; the wrapper above
+                        # owns the visible circle.
+                        md_bg_color: 0, 0, 0, 0
+                        size_hint: 1, 1
+                        on_release: root.open_options_menu()
 
                 # ── selection mode: count + bulk delete + cancel ──
                 MDBoxLayout:
@@ -774,7 +787,7 @@
                 role: "large"
                 theme_text_color: "Custom"
                 halign: "center"
-                valign: "middle"
+                valign: "bottom"
                 text_size: self.size
                 size_hint: 1, 1
                 pos_hint: {"x": 0, "y": 0}
