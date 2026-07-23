@@ -2,6 +2,9 @@
 from kivymd.uix.card import MDCard
 from kivy.properties import StringProperty, NumericProperty, BooleanProperty
 
+from theme.theme_manager import theme_manager
+from theme.palettes import CARD_PRIMARY, TEXT_PRIMARY, TEXT_SECONDARY, ACCENT
+
 
 class NoteCard(MDCard):
     title = StringProperty("Untitled")
@@ -15,6 +18,25 @@ class NoteCard(MDCard):
     selection_mode = BooleanProperty(False)
     grid_mode = BooleanProperty(False)
     is_selected = BooleanProperty(False)
+
+    def apply_theme(self):
+        
+        self.md_bg_color = theme_manager.get_color(CARD_PRIMARY)
+
+        if "title_label" in self.ids:
+            self.ids.title_label.text_color = theme_manager.get_color(TEXT_PRIMARY)
+
+        if "preview_label" in self.ids:
+            self.ids.preview_label.text_color = theme_manager.get_color(TEXT_SECONDARY)
+
+        if "last_edited_label" in self.ids:
+            self.ids.last_edited_label.text_color = theme_manager.get_color(TEXT_SECONDARY)
+
+        if "pin_icon" in self.ids:
+            self.ids.pin_icon.icon_color = theme_manager.get_color(ACCENT)
+
+        if "selection_checkbox" in self.ids:
+            self.ids.selection_checkbox.icon_color = theme_manager.get_color(TEXT_PRIMARY)
 
     def on_touch_down(self, touch):
         if "pin_icon" in self.ids and self.ids.pin_icon.collide_point(*touch.pos):

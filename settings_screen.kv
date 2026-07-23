@@ -75,11 +75,11 @@
                             padding: dp(2), 0
 
                             MDButton:
-                                id: cream_button
+                                id: default_button
                                 style: "filled"
-                                on_release: root.set_cream_theme()
+                                on_release: root.set_default_theme()
                                 MDButtonText:
-                                    text: "Cream"
+                                    text: "Default"
 
                             MDButton:
                                 id: dark_button
@@ -89,11 +89,18 @@
                                     text: "Dark"
 
                             MDButton:
-                                id: default_button
+                                id: cream_button
                                 style: "filled"
-                                on_release: root.set_default_theme()
+                                on_release: root.set_cream_theme()
                                 MDButtonText:
-                                    text: "Default"
+                                    text: "Cream"
+
+                            MDButton:
+                                id: matcha_button
+                                style: "filled"
+                                on_release: root.set_matcha_theme()
+                                MDButtonText:
+                                    text: "Matcha"
 
                             MDButton:
                                 id: monochrome_button

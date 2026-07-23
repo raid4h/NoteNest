@@ -29,6 +29,7 @@ class SettingsScreen(ThemedScreenMixin, MDScreen):
         "dark_button":       ("md_bg_color", BUTTON),
         "default_button":    ("md_bg_color", BUTTON),
         "monochrome_button": ("md_bg_color", BUTTON),
+        "matcha_button":     ("md_bg_color", BUTTON),
 
         # Google Account (identity only — sign in / sign out)
         "account_card":           ("md_bg_color", CARD_SECONDARY),
@@ -90,6 +91,9 @@ class SettingsScreen(ThemedScreenMixin, MDScreen):
 
     def set_monochrome_theme(self):
         theme_manager.set_monochrome_theme()
+
+    def set_matcha_theme(self):
+        theme_manager.set_matcha_theme()
 
     # ── google account (identity) ──
     # Implemented in the backend roadmap's Phase 4 (services/auth_service.py).

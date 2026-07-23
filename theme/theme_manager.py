@@ -6,34 +6,36 @@
 from kivy.event import EventDispatcher
 from kivy.properties import StringProperty
 
-from theme.palettes import CREAM, DARK, DEFAULT, MONOCHROME
+from theme.palettes import DEFAULT, DARK, CREAM, MATCHA, MONOCHROME
 
 _PALETTES = {
-    "cream": CREAM,
-    "dark": DARK,
     "default": DEFAULT,
+    "dark": DARK,
+    "cream": CREAM,
+    "matcha": MATCHA,
     "monochrome": MONOCHROME,
 }
 
 
 class ThemeManager(EventDispatcher):
 
-    # "default" is now the app's actual starting theme, per your
-    # instruction to make the former Floral palette the default.
     theme_name = StringProperty("default")
 
     def set_theme(self, name):
         if name in _PALETTES:
             self.theme_name = name
 
-    def set_cream_theme(self):
-        self.set_theme("cream")
+    def set_default_theme(self):
+        self.set_theme("default")
 
     def set_dark_theme(self):
         self.set_theme("dark")
 
-    def set_default_theme(self):
-        self.set_theme("default")
+    def set_cream_theme(self):
+        self.set_theme("cream")
+
+    def set_matcha_theme(self):
+        self.set_theme("matcha")
 
     def set_monochrome_theme(self):
         self.set_theme("monochrome")

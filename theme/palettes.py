@@ -8,10 +8,8 @@
 # That's what lets ThemeManager swap themes safely: it just looks up
 # the same token in a different dictionary.
 
-# Warm, soothing "oat milk latte" palette — cream base with a
-# consistent warm-brown undertone running through every token.
 CREAM = {
-    "background":     "#FBF3E4",
+    "background":      "#FBF3E4",
     "card_primary":    "#F1E4D0",
     "card_secondary":  "#E8D8C0",
     "border":          "#D9C4A5",
@@ -43,25 +41,33 @@ DEFAULT = {
     "border":          "#B9AEE8",
     "accent":          "#F2A6B4",
     "text_secondary":  "#8A7FA8",
-    "button":          "#E8899F",
+    "button":          "#D6567A",
     "text_primary":    "#4A3B6B",
     "button_text":     "#FFF9FC",
 }
 
-# True grayscale — every value is a shade of gray, no hue at all,
-# distinct from the old Cyberpunk's neon purple/pink/blue palette.
-# A light button on a near-black background gives it a deliberate,
-# high-contrast "monochrome poster" feel rather than a colorful one.
 MONOCHROME = {
     "background":      "#121212",
-    "card_primary":    "#1E1E1E",
-    "card_secondary":  "#2A2A2A",
-    "border":          "#3D3D3D",
-    "accent":          "#9E9E9E",
-    "text_secondary":  "#B0B0B0",
+    "card_primary":    "#242424",
+    "card_secondary":  "#303030",
+    "border":          "#4A4A4A",
+    "accent":          "#B0B0B0",
+    "text_secondary":  "#BDBDBD",
     "button":          "#E0E0E0",
     "text_primary":    "#FFFFFF",
     "button_text":     "#121212",
+}
+
+MATCHA = {
+    "background":      "#C9D3B4",
+    "card_primary":    "#F4EFDD",
+    "card_secondary":  "#E9E2C8",
+    "border":          "#B7C29B",
+    "accent":          "#7C9A5E",
+    "text_secondary":  "#6E7A58",
+    "button":          "#5C7A44",
+    "text_primary":    "#3A4530",
+    "button_text":     "#F5F1E6",
 }
 
 # --- Semantic token constants ---
