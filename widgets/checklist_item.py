@@ -6,6 +6,7 @@ from kivy.lang import Builder
 from kivy.properties import (
     BooleanProperty,
     ListProperty,
+    NumericProperty,
     StringProperty,
 )
 from kivy.uix.boxlayout import BoxLayout
@@ -51,6 +52,7 @@ class ChecklistItem(BoxLayout):
     - expandable subtasks
     """
 
+    task_id = NumericProperty(0)
     text = StringProperty("")
     checked = BooleanProperty(False)
 
@@ -60,7 +62,10 @@ class ChecklistItem(BoxLayout):
     # Optional information.
     # An empty string means that the field is not shown.
     due_date = StringProperty("")
+    due_time = StringProperty("")
     link = StringProperty("")
+    is_carried = BooleanProperty(False)
+    notify_enabled = BooleanProperty(False)
 
     # Controls subtask visibility.
     expanded = BooleanProperty(False)
@@ -200,6 +205,18 @@ class ChecklistItem(BoxLayout):
 
         except ValueError:
             return date_value
+
+
+    def format_due_details(self):
+        """Return a compact date/time label for the task card."""
+        date_text = self.format_due_date(self.due_date)
+        if self.due_time:
+            date_text = f"{date_text} at {self.due_time}" if date_text else self.due_time
+        if self.is_carried:
+            date_text = f"{date_text} · carried forward"
+        if self.notify_enabled:
+            date_text = f"{date_text} · notification on"
+        return date_text
 
     def open_link(self):
         """

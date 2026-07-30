@@ -1,40 +1,47 @@
-from theme.palettes import LIGHT, DARK, PINK, CYBERPUNK
+# ThemeManager is an EventDispatcher, which means it can hold Kivy
+# Properties. theme_name is a StringProperty, so any object can
+# "subscribe" to it via .bind() and get notified automatically
+# whenever the theme changes — no manual refresh loop needed.
+
+from kivy.event import EventDispatcher
+from kivy.properties import StringProperty
+
+from theme.palettes import DEFAULT, DARK, FLORAL, MATCHA, MONOCHROME
+
+_PALETTES = {
+    "default": DEFAULT,
+    "dark": DARK,
+    "floral": FLORAL,
+    "matcha": MATCHA,
+    "monochrome": MONOCHROME,
+}
 
 
-class ThemeManager:
+class ThemeManager(EventDispatcher):
 
-    def __init__(self):
-        self.current_theme = "light"
+    theme_name = StringProperty("default")
 
-    def set_light_theme(self):
-        self.current_theme = "light"
+    def set_theme(self, name):
+        if name in _PALETTES:
+            self.theme_name = name
+
+    def set_default_theme(self):
+        self.set_theme("default")
 
     def set_dark_theme(self):
-        self.current_theme = "dark"
+        self.set_theme("dark")
 
-    def set_pink_theme(self):
-        self.current_theme = "pink"
+    def set_floral_theme(self):
+        self.set_theme("floral")
 
-    def set_cyberpunk_theme(self):
-        self.current_theme = "cyberpunk"
+    def set_matcha_theme(self):
+        self.set_theme("matcha")
 
-    def get_color(self, color):
+    def set_monochrome_theme(self):
+        self.set_theme("monochrome")
 
-        color = color.upper()
-
-        if self.current_theme == "light":
-            return LIGHT.get(color, color)
-
-        elif self.current_theme == "dark":
-            return DARK.get(color, color)
-
-        elif self.current_theme == "pink":
-            return PINK.get(color, color)
-        
-        elif self.current_theme == "cyberpunk":
-            return CYBERPUNK.get(color, color)
-
-        return color
+    def get_color(self, token):
+        return _PALETTES[self.theme_name].get(token, token)
 
 
 theme_manager = ThemeManager()

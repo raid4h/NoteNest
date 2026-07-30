@@ -1,0 +1,333 @@
+<DashboardTile>:
+    theme_bg_color: "Custom"
+    size_hint_x: 1
+    size_hint_y: None
+    height: dp(110)
+    radius: [18]
+    ripple_behavior: True
+    elevation: 1
+    shadow_softness: 4
+    shadow_offset: 0, -2
+
+    MDBoxLayout:
+        orientation: "horizontal"
+        padding: dp(18), dp(14)
+        spacing: dp(14)
+        
+        AnchorLayout:
+            size_hint_x: None
+            width: dp(52)
+            anchor_x: "center"
+            anchor_y: "center"
+
+            MDCard:
+                id: icon_container
+                theme_bg_color: "Custom"
+                size_hint: None, None
+                size: dp(52), dp(52)
+                radius: [16]
+                pos_hint: {"center_y": 0.5}
+
+                AnchorLayout:
+                    anchor_x: "center"
+                    anchor_y: "center"
+
+                    MDIconButton:
+                        id: tile_icon
+                        icon: root.icon_name
+                        theme_icon_color: "Custom"
+                        size_hint: None, None
+                        size: dp(40), dp(40)
+                        on_release: root.on_release()
+
+        AnchorLayout:
+            anchor_x: "center"
+            anchor_y: "center"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                spacing: dp(3)
+                pos_hint: {"center_y": 0.5}
+
+                MDLabel:
+                    id: tile_label
+                    text: root.label
+                    halign: "left"
+                    theme_text_color: "Custom"
+                    font_style: "Title"
+                    role: "medium"
+                    adaptive_height: True
+
+                MDLabel:
+                    id: tile_subtitle
+                    text: root.subtitle
+                    halign: "left"
+                    theme_text_color: "Custom"
+                    font_style: "Body"
+                    role: "small"
+                    adaptive_height: True
+
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint_x: None
+            width: dp(60)
+            spacing: dp(0)
+            pos_hint: {"center_y": 0.5}
+            
+            MDLabel:
+                id: stat_number
+                text: root.stat_number
+                halign: "right"
+                theme_text_color: "Custom"
+                theme_font_size: "Custom"
+                font_size: sp(26)
+                bold: True
+                adaptive_height: True
+
+            MDLabel:
+                id: stat_label
+                text: root.stat_label
+                halign: "right"
+                theme_text_color: "Custom"
+                font_style: "Label"
+                role: "small"
+                adaptive_height: True
+
+
+<SmallTile>:
+    theme_bg_color: "Custom"
+    size_hint: 1, None
+    height: dp(120)
+    radius: [18]
+    ripple_behavior: True
+    elevation: 1
+    on_release: root.on_release()
+
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: dp(14)
+        spacing: dp(8)
+
+        MDCard:
+            id: icon_container
+            theme_bg_color: "Custom"
+            size_hint: None, None
+            size: dp(36), dp(36)
+            radius: [11]
+
+            AnchorLayout:
+                anchor_x: "center"
+                anchor_y: "center"
+
+                MDIconButton:
+                    id: tile_icon
+                    icon: root.icon_name
+                    theme_icon_color: "Custom"
+                    size_hint: None, None
+                    size: dp(28), dp(28)
+
+        MDLabel:
+            id: tile_label
+            text: root.label
+            theme_text_color: "Custom"
+            font_style: "Title"
+            role: "small"
+            adaptive_height: True
+
+        MDLabel:
+            id: tile_stat
+            text: root.stat_text
+            theme_text_color: "Custom"
+            font_style: "Label"
+            role: "small"
+            adaptive_height: True
+
+<Streak>:
+    orientation: "vertical"
+    size_hint: None, None
+    size: dp(36), dp(48)
+    spacing: dp(6)
+
+    MDCard:
+        id: dot
+        theme_bg_color: "Custom"
+        size_hint: None, None
+        size: dp(28), dp(28)
+        radius: [14]
+        elevation: 0
+        pos_hint: {"center_x": 0.5}
+
+    MDLabel:
+        id: day_label
+        text: root.day_letter
+        theme_text_color: "Custom"
+        font_style: "Label"
+        role: "small"
+        halign: "center"
+        size_hint_y: None
+        height: dp(14)
+
+<HomeScreen>:
+    MDBoxLayout:
+        id: drawer_layout
+        orientation: "vertical"
+
+        ScrollView:
+            do_scroll_x: False
+
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: dp(20), dp(16), dp(20), dp(24)
+                spacing: dp(16)
+                adaptive_height: True
+
+                # ── top row: greeting + settings ──
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(56)
+
+                    MDBoxLayout:
+                        orientation: "vertical"
+
+                        MDLabel:
+                            id: date_label
+                            text: ""
+                            theme_text_color: "Custom"
+                            font_style: "Body"
+                            role: "small"
+                            adaptive_height: True
+
+                        MDLabel:
+                            id: greeting_label
+                            text: "Good evening"
+                            theme_text_color: "Custom"
+                            font_style: "Title"
+                            role: "large"
+                            adaptive_height: True
+
+                    MDIconButton:
+                        id: menu_button
+                        icon: "cog-outline"
+                        theme_icon_color: "Custom"
+                        pos_hint: {"center_y": 0.5}
+                        on_release: root.open_settings()
+
+                # ── rotating quote card ──
+                MDCard:
+                    id: quote_card
+                    theme_bg_color: "Custom"
+                    radius: [16]
+                    elevation: 0
+                    size_hint_y: None
+                    height: dp(64)
+                    padding: dp(24), dp(10)
+
+                    MDLabel:
+                        id: quote_label
+                        text: ""
+                        theme_text_color: "Custom"
+                        font_style: "Body"
+                        role: "small"
+                        italic: True
+                        halign: "center"
+                        valign: "middle"
+                        text_size: self.size
+
+                # ── hero tile: Notes ──
+                DashboardTile:
+                    id: notes_tile
+                    label: "Notes"
+                    subtitle: "Write and organize your ideas"
+                    stat_text: ""
+                    icon_name: "notebook-outline"
+                    target_screen: "notes"
+                    on_release: root.go_to("notes")
+                    pos_hint: {"center_y": 0.5}
+
+                # ── small tiles row: Pomodoro + Tasks ──
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(120)
+                    spacing: dp(14)
+
+                    SmallTile:
+                        id: pomodoro_tile
+                        label: "Pomodoro"
+                        stat_text: ""
+                        icon_name: "timer-sand"
+                        target_screen: "timer"
+                        accent_token: "tile_accent_pomodoro"
+                        on_release: root.go_to("timer")
+
+                    SmallTile:
+                        id: tasks_tile
+                        label: "Tasks"
+                        stat_text: ""
+                        icon_name: "calendar-check-outline"
+                        target_screen: "calendar"
+                        accent_token: "tile_accent_tasks"
+                        on_release: root.go_to("calendar")
+                
+                MDCard:
+                    id: streak_card
+                    theme_bg_color: "Custom"
+                    radius: [16]
+                    elevation: 0
+                    size_hint_y: None
+                    height: dp(110)
+                    padding: dp(16), dp(12)
+
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        spacing: dp(10)
+
+                        MDLabel:
+                            id: streak_title
+                            text: "This week"
+                            theme_text_color: "Custom"
+                            font_style: "Title"
+                            role: "small"
+                            adaptive_height: True
+
+                        MDBoxLayout:
+                            id: streak_row
+                            orientation: "horizontal"
+                            spacing: dp(10)
+                            size_hint_y: None
+                            height: dp(48)
+
+                # ── last edited strip ──
+                MDBoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: dp(44)
+
+                    Widget:
+                        id: last_edited_divider
+                        size_hint_y: None
+                        height: dp(1)
+                        canvas.before:
+                            Color:
+                                rgba: root.divider_color
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+
+                    MDBoxLayout:
+                        orientation: "horizontal"
+                        padding: dp(4), dp(10), dp(4), dp(0)
+
+                        MDLabel:
+                            id: last_edited_static_label
+                            text: "Last edited"
+                            theme_text_color: "Custom"
+                            font_style: "Label"
+                            role: "small"
+
+                        MDLabel:
+                            id: last_edited_label
+                            text: ""
+                            theme_text_color: "Custom"
+                            font_style: "Label"
+                            role: "small"
+                            halign: "right"

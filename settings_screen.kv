@@ -1,8 +1,3 @@
-# settings_screen.kv
-# Layout for SettingsScreen. Every id here must match what
-# settings_screen.py's apply_theme() references, or you'll get
-# a KeyError the moment that screen opens.
-
 <SettingsScreen>:
     MDBoxLayout:
         orientation: "vertical"
@@ -16,7 +11,9 @@
             spacing: dp(8)
 
             MDIconButton:
+                id: back_button
                 icon: "arrow-left"
+                theme_icon_color: "Custom"
                 on_release: root.go_back()
 
             MDBoxLayout:
@@ -25,12 +22,14 @@
                 MDLabel:
                     id: title_label
                     text: "Settings"
+                    theme_text_color: "Custom"
                     font_style: "Title"
                     role: "medium"
 
                 MDLabel:
                     id: subtitle_label
                     text: "Customize your NoteNest experience"
+                    theme_text_color: "Custom"
                     font_style: "Body"
                     role: "small"
 
@@ -40,9 +39,14 @@
                 spacing: dp(16)
                 adaptive_height: True
 
-                # ── appearance card: theme buttons ──
+                # ── theme card ──
                 MDCard:
-                    id: appearance_card
+                    id: theme_card
+                    theme_bg_color: "Custom"
+                    md_bg_color: 0, 0, 0, 0
+                    elevation: 0
+                    theme_shadow_color: "Custom"
+                    shadow_color: 0, 0, 0, 0
                     orientation: "vertical"
                     padding: dp(16)
                     spacing: dp(12)
@@ -50,43 +54,123 @@
                     radius: [16]
 
                     MDLabel:
-                        text: "Appearance"
-
-                    MDBoxLayout:
-                        spacing: dp(8)
+                        id: theme_section_label
+                        text: "Theme"
+                        theme_text_color: "Custom"
+                        font_style: "Body"
+                        role: "medium"
                         adaptive_height: True
 
-                        MDButton:
-                            id: light_button
-                            style: "filled"
-                            on_release: root.set_light_theme()
-                            MDButtonText:
-                                text: "Light"
+                    ScrollView:
+                        size_hint_y: None
+                        height: dp(48)
+                        do_scroll_x: True
+                        do_scroll_y: False
+                        bar_width: dp(0)
 
-                        MDButton:
-                            id: dark_button
-                            style: "filled"
-                            on_release: root.set_dark_theme()
-                            MDButtonText:
-                                text: "Dark"
+                        MDBoxLayout:
+                            size_hint_x: None
+                            width: self.minimum_width
+                            spacing: dp(8)
+                            padding: dp(2), 0
 
-                        MDButton:
-                            id: pink_button
-                            style: "filled"
-                            on_release: root.set_pink_theme()
-                            MDButtonText:
-                                text: "Pink"
+                            MDButton:
+                                id: default_button
+                                style: "filled"
+                                on_release: root.set_default_theme()
+                                MDButtonText:
+                                    text: "Default"
 
-                        MDButton:
-                            id: cyber_button
-                            style: "filled"
-                            on_release: root.set_cyberpunk_theme()
-                            MDButtonText:
-                                text: "Cyberpunk"
+                            MDButton:
+                                id: dark_button
+                                style: "filled"
+                                on_release: root.set_dark_theme()
+                                MDButtonText:
+                                    text: "Dark"
 
-                # ── account card ──
+                            MDButton:
+                                id: floral_button
+                                style: "filled"
+                                on_release: root.set_floral_theme()
+                                MDButtonText:
+                                    text: "Floral"
+
+                            MDButton:
+                                id: matcha_button
+                                style: "filled"
+                                on_release: root.set_matcha_theme()
+                                MDButtonText:
+                                    text: "Matcha"
+
+                            MDButton:
+                                id: monochrome_button
+                                style: "filled"
+                                on_release: root.set_monochrome_theme()
+                                MDButtonText:
+                                    text: "Monochrome"
+
+                # ── backup & restore card: export/import only ──
                 MDCard:
-                    id: account_card
+                    id: backup_card
+                    theme_bg_color: "Custom"
+                    orientation: "vertical"
+                    padding: dp(16)
+                    spacing: dp(14)
+                    adaptive_height: True
+                    radius: [16]
+
+                    MDLabel:
+                        id: backup_section_label
+                        text: "Backup & Restore"
+                        theme_text_color: "Custom"
+                        font_style: "Body"
+                        role: "medium"
+                        adaptive_height: True
+
+                    # -- export row --
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(40)
+                        spacing: dp(8)
+
+                        MDLabel:
+                            id: export_row_label
+                            text: "Export to file"
+                            theme_text_color: "Custom"
+                            font_style: "Title"
+                            role: "small"
+
+                        MDIconButton:
+                            id: export_chevron
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            pos_hint: {"center_y": 0.5}
+                            on_release: root.export_to_file()
+
+                    # -- import row --
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(40)
+                        spacing: dp(8)
+
+                        MDLabel:
+                            id: import_row_label
+                            text: "Import from file"
+                            theme_text_color: "Custom"
+                            font_style: "Title"
+                            role: "small"
+
+                        MDIconButton:
+                            id: import_chevron
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            pos_hint: {"center_y": 0.5}
+                            on_release: root.import_from_file()
+
+                # ── privacy card ──
+                MDCard:
+                    id: privacy_card
+                    theme_bg_color: "Custom"
                     orientation: "vertical"
                     padding: dp(16)
                     spacing: dp(12)
@@ -94,23 +178,49 @@
                     radius: [16]
 
                     MDLabel:
-                        text: "Account"
+                        id: privacy_section_label
+                        text: "Privacy"
+                        theme_text_color: "Custom"
+                        font_style: "Body"
+                        role: "medium"
+                        adaptive_height: True
 
-                    MDButton:
-                        style: "filled"
-                        on_release: root.update_account()
-                        MDButtonText:
-                            text: "Update account"
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(56)
+                        spacing: dp(8)
 
-                    MDButton:
-                        style: "filled"
-                        on_release: root.logout()
-                        MDButtonText:
-                            text: "Log out"
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            size_hint_x: 1
+
+                            MDLabel:
+                                id: privacy_row_label
+                                text: "Privacy settings"
+                                theme_text_color: "Custom"
+                                font_style: "Title"
+                                role: "small"
+                                adaptive_height: True
+
+                            MDLabel:
+                                id: privacy_row_subtitle
+                                text: "Manage app permissions and data"
+                                theme_text_color: "Custom"
+                                font_style: "Body"
+                                role: "small"
+                                adaptive_height: True
+
+                        MDIconButton:
+                            id: privacy_chevron
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            pos_hint: {"center_y": 0.5}
+                            on_release: root.open_privacy_settings()
 
                 # ── notifications card ──
                 MDCard:
-                    id: notification_card
+                    id: notifications_card
+                    theme_bg_color: "Custom"
                     orientation: "vertical"
                     padding: dp(16)
                     spacing: dp(12)
@@ -118,14 +228,33 @@
                     radius: [16]
 
                     MDLabel:
+                        id: notifications_section_label
                         text: "Notifications"
+                        theme_text_color: "Custom"
+                        font_style: "Body"
+                        role: "medium"
+                        adaptive_height: True
 
-                    MDSwitch:
-                        on_active: root.toggle_notifications()
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(40)
+                        spacing: dp(8)
+
+                        MDLabel:
+                            id: notifications_row_label
+                            text: "Enable notifications"
+                            theme_text_color: "Custom"
+                            font_style: "Title"
+                            role: "small"
+
+                        MDSwitch:
+                            pos_hint: {"center_y": 0.5}
+                            on_active: root.toggle_notifications()
 
                 # ── about card ──
                 MDCard:
                     id: about_card
+                    theme_bg_color: "Custom"
                     orientation: "vertical"
                     padding: dp(16)
                     spacing: dp(12)
@@ -133,7 +262,55 @@
                     radius: [16]
 
                     MDLabel:
+                        id: about_section_label
                         text: "About NoteNest"
+                        theme_text_color: "Custom"
+                        font_style: "Body"
+                        role: "medium"
+                        adaptive_height: True
+
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(40)
+                        spacing: dp(8)
+
+                        MDLabel:
+                            id: rate_row_label
+                            text: "Rate app"
+                            theme_text_color: "Custom"
+                            font_style: "Title"
+                            role: "small"
+
+                        MDIconButton:
+                            id: rate_chevron
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            pos_hint: {"center_y": 0.5}
+                            on_release: root.rate_app()
+
+                    MDBoxLayout:
+                        size_hint_y: None
+                        height: dp(40)
+                        spacing: dp(8)
+
+                        MDLabel:
+                            id: privacy_policy_row_label
+                            text: "Privacy policy"
+                            theme_text_color: "Custom"
+                            font_style: "Title"
+                            role: "small"
+
+                        MDIconButton:
+                            id: privacy_policy_chevron
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            pos_hint: {"center_y": 0.5}
+                            on_release: root.open_privacy_policy()
 
                     MDLabel:
+                        id: footer_label
                         text: "CSE299(10) Group 3, Summer 2026"
+                        theme_text_color: "Custom"
+                        font_style: "Body"
+                        role: "small"
+                        adaptive_height: True

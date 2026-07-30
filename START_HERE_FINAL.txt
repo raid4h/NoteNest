@@ -1,0 +1,22 @@
+NoteNest Final Calendar Build
+
+Included fixes:
+- Equal-height responsive calendar rows
+- Selected-day tasks visible below the calendar
+- Date taps load all tasks for that date
+- Fully themed category picker
+- Themed Create New Category popup
+- Black visible typing in light-theme task fields
+- Editable fields with Backspace support
+
+IMPORTANT
+1. Copy the `fonts` folder from your current NoteNest project.
+2. Copy your current `MyApp.db` into this NoteNest folder to preserve notes,
+   tasks, categories and other saved data.
+3. Open this extracted NoteNest folder in VS Code.
+4. Run:
+
+    .\.venv\Scripts\python.exe main.py
+
+The .venv folder is not included. You may use the one from your current
+project or recreate it.

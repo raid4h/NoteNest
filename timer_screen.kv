@@ -1,52 +1,165 @@
 # timer_screen.kv
-# Layout for TimerScreen (Pomodoro). timer_label and session_label
-# are updated every 0.2s by refresh_ui() in timer_screen.py.
+# Modern Pomodoro UI. All colors are applied from timer_screen.py via
+# ThemeManager + THEME_MAP / on_theme_applied — nothing here is hardcoded.
 
 <TimerScreen>:
+
     MDBoxLayout:
         orientation: "vertical"
         padding: dp(24)
-        spacing: dp(24)
-        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+        spacing: dp(20)
 
-        MDLabel:
-            id: session_label
-            text: "Focus Time"
-            halign: "center"
-            font_style: "Title"
-            role: "medium"
-
-        MDLabel:
-            id: timer_label
-            text: "25:00"
-            halign: "center"
-            font_style: "Title"
-            role: "medium"
-            font_size: "48sp"   # bumped up manually, "Display" role isn't confirmed to exist in your KivyMD build
+        # =====================================================
+        # Top bar: back button + title/subtitle, side by side —
+        # matches SettingsScreen's header shape for consistency.
+        # =====================================================
 
         MDBoxLayout:
-            spacing: dp(16)
-            adaptive_height: True
-            pos_hint: {"center_x": 0.5}
-
-            MDButton:
-                style: "filled"
-                on_release: root.start_timer()
-                MDButtonText:
-                    text: "Start"
-
-            MDButton:
-                style: "filled"
-                on_release: root.pause_timer()
-                MDButtonText:
-                    text: "Pause"
-
-            MDButton:
-                style: "filled"
-                on_release: root.reset_timer()
-                MDButtonText:
-                    text: "Reset"
+            id: top_bar
+            size_hint_y: None
+            height: dp(56)
+            spacing: dp(8)
 
             MDIconButton:
+                id: back_button
+                icon: "arrow-left"
+                theme_icon_color: "Custom"
+                on_release: root.go_back()
+
+            MDBoxLayout:
+                orientation: "vertical"
+
+                MDLabel:
+                    id: header_label
+                    text: "Focus Timer"
+                    theme_text_color: "Custom"
+                    font_style: "Title"
+                    role: "medium"
+
+                MDLabel:
+                    id: subtitle_label
+                    text: "Stay focused. One session at a time."
+                    theme_text_color: "Custom"
+                    font_style: "Body"
+                    role: "small"
+
+        # =====================================================
+        # Centered cluster: hourglass, timer, session info,
+        # status message. This AnchorLayout fills 100% of the
+        # leftover vertical space (top_bar and controls_row are
+        # both fixed-height), so the whole cluster is properly
+        # centered regardless of exact content sizes.
+        #
+        # The cluster itself has a fixed width (size_hint_x: None,
+        # width: dp(300)) rather than adaptive_size — this is what
+        # was fixed. Only height stays adaptive, which is safe
+        # because every child below already has an explicit height.
+        # =====================================================
+
+        AnchorLayout:
+            anchor_x: "center"
+            anchor_y: "center"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                size_hint: None, None
+                width: dp(300)
+                adaptive_height: True
+                spacing: dp(16)
+
+                AnchorLayout:
+                    size_hint_y: None
+                    height: dp(160)
+
+                    HourglassWidget:
+                        id: hourglass
+                        size_hint: None, None
+                        size: dp(150), dp(150)
+
+                MDLabel:
+                    id: timer_label
+                    text: "25:00"
+                    halign: "center"
+                    text_size: self.width, None
+                    theme_text_color: "Custom"
+                    font_style: "Title"
+                    role: "large"
+                    font_size: "56sp"
+                    size_hint_y: None
+                    height: dp(70)
+
+                MDLabel:
+                    id: session_label
+                    text: "Focus Time"
+                    halign: "center"
+                    text_size: self.width, None
+                    theme_text_color: "Custom"
+                    font_style: "Title"
+                    role: "small"
+                    size_hint_y: None
+                    height: dp(28)
+
+                MDLabel:
+                    id: session_sub_label
+                    text: "25 minute session"
+                    halign: "center"
+                    text_size: self.width, None
+                    theme_text_color: "Custom"
+                    font_style: "Body"
+                    role: "small"
+                    size_hint_y: None
+                    height: dp(22)
+
+                # Reserved height, even when empty, so a transition
+                # message appearing/disappearing never shifts the
+                # controls row below it.
+                MDLabel:
+                    id: status_label
+                    text: ""
+                    halign: "center"
+                    text_size: self.width, None
+                    theme_text_color: "Custom"
+                    font_style: "Body"
+                    role: "small"
+                    size_hint_y: None
+                    height: dp(24)
+
+        # =====================================================
+        # Controls: reset (secondary) — play/pause (primary,
+        # filled + larger) — settings (secondary)
+        # =====================================================
+
+        MDBoxLayout:
+            id: controls_row
+            size_hint_y: None
+            height: dp(96)
+            spacing: dp(32)
+            adaptive_width: True
+            pos_hint: {"center_x": 0.5}
+
+            MDIconButton:
+                id: reset_button
+                icon: "restart"
+                theme_icon_color: "Custom"
+                icon_size: "26sp"
+                size_hint: None, None
+                size: dp(76), dp(76)
+                on_release: root.reset_timer()
+
+            MDIconButton:
+                id: toggle_button
+                icon: "play"
+                theme_icon_color: "Custom"
+                icon_size: "26sp"
+                size_hint: None, None
+                size: dp(76), dp(76)
+                on_release: root.toggle_timer()
+
+            MDIconButton:
+                id: settings_button
                 icon: "cog-outline"
+                theme_icon_color: "Custom"
+                icon_size: "26sp"
+                size_hint: None, None
+                size: dp(76), dp(76)
                 on_release: root.open_timer_dialog()

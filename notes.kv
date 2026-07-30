@@ -1,0 +1,756 @@
+# ── NoteCard ──────────────────────────────────────────────────
+<NoteCard>:
+    orientation: "horizontal"
+    padding: "16dp"
+    spacing: "6dp"
+    size_hint_y: None
+    height: dp(230) if root.grid_mode else dp(100)
+    radius: [24, 24, 24, 24]
+    ripple_behavior: True
+    elevation: 3
+    md_bg_color: 0.97, 0.95, 0.90, 1
+
+    Widget:
+        id: category_stripe
+        size_hint_x: None
+        width: dp(4) if root.category_color else 0
+        canvas.before:
+            Color:
+                rgba: root.category_color if root.category_color else (0, 0, 0, 0)
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: "6dp"
+
+        MDBoxLayout:
+            orientation: "horizontal"
+            adaptive_height: True
+            spacing: "6dp"
+
+            MDIconButton:
+                id: selection_checkbox
+                icon: "checkbox-marked-circle" if root.is_selected else "checkbox-blank-circle-outline"
+                theme_icon_color: "Custom"
+                icon_color: 0.29, 0.20, 0.15, 1
+                size_hint_x: None
+                width: dp(36) if root.selection_mode else 0
+                opacity: 1 if root.selection_mode else 0
+                disabled: True
+
+            MDLabel:
+                text: root.title
+                font_style: "Title"
+                role: "medium"
+                adaptive_height: True
+                halign: "left"
+                valign: "top"
+                # Small left inset so the text doesn't start flush
+                # against the card's inner edge.
+                padding: dp(2), 0
+                # Height bound to ~2 lines (Title/medium role is ~16sp
+                # with ~24dp line height, so 2 lines ≈ 48dp) -- this is
+                # what actually lets shorten+max_lines wrap normally
+                # for 2 lines and only ellipsis-truncate if a 3rd line
+                # would've been needed. Normal wrapping breaks on word
+                # boundaries; only the truncated final line gets "...".
+                text_size: self.width, (dp(48) if root.grid_mode else None)
+                shorten: True
+                shorten_from: "right"
+                max_lines: 2 if root.grid_mode else 1
+                theme_text_color: "Custom"
+                text_color: 0.29, 0.20, 0.15, 1
+
+        MDLabel:
+            text: root.preview
+            font_style: "Body"
+            role: "small"
+            adaptive_height: True
+            halign: "left"
+            valign: "top"
+            padding: dp(6), 0
+            # Same fix as the title above -- Body/small role is
+            # smaller text (~18dp/line), so 4 lines ≈ 72dp.
+            text_size: self.width, (dp(72) if root.grid_mode else None)
+            shorten: True
+            shorten_from: "right"
+            max_lines: 4 if root.grid_mode else 1
+            theme_text_color: "Custom"
+            text_color: 0.54, 0.35, 0.17, 1
+
+        Widget:
+            size_hint_y: 1 if root.grid_mode else None
+            height: 0
+
+        MDLabel:
+            text: root.last_edited
+            font_style: "Label"
+            role: "small"
+            adaptive_height: True
+            theme_text_color: "Custom"
+            text_color: 0.65, 0.52, 0.35, 1
+
+    MDIconButton:
+        id: pin_icon
+        # Own column on the right, spanning the whole card -- pos_hint
+        # centers it vertically against the card's full height instead
+        # of sitting inline with the title near the top.
+        icon: "pin" if root.is_pinned else "pin-outline"
+        theme_icon_color: "Custom"
+        icon_color: 0.54, 0.35, 0.17, 1
+        size_hint: None, None
+        size: dp(36), dp(36)
+        pos_hint: {"center_y": 0.5}
+        on_release: root.toggle_pin()
+
+# ── AttachmentThumbnail ──────────────────────────────────────────
+<AttachmentThumbnail>:
+    size_hint: None, None
+    size: dp(72), dp(72)
+    radius: [8]
+    md_bg_color: 0.92, 0.84, 0.66, 1
+
+    Image:
+        source: root.image_path
+        size_hint: 1, 1
+        pos_hint: {"x": 0, "y": 0}
+        allow_stretch: True
+        keep_ratio: False
+
+    MDIconButton:
+        icon: "close-circle"
+        pos_hint: {"right": 1, "top": 1}
+        size_hint: None, None
+        size: dp(20), dp(20)
+        theme_icon_color: "Custom"
+        icon_color: 1, 1, 1, 1
+        on_release: root.request_remove()
+
+# ── NotesScreen ────────────────────────────────────────────────
+<NotesScreen>:
+    id: notes_screen_root
+
+    FloatLayout:
+
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint: 1, 1
+
+            MDBoxLayout:
+                id: top_bar
+                size_hint_y: None
+                height: "56dp"
+                padding: "8dp", "4dp"
+                spacing: "4dp"
+
+                MDIconButton:
+                    id: back_button
+                    icon: "arrow-left"
+                    theme_icon_color: "Custom"
+                    on_release: root.go_home()
+
+                MDBoxLayout:
+                    # Wrapping header_label like this just to add a
+                    # tiny top spacer -- nudges the text down slightly
+                    # without needing to touch the row's own height or
+                    # padding (which would also shift the icon buttons).
+                    orientation: "vertical"
+                    size_hint_x: 1
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(6)
+
+                    MDLabel:
+                        id: header_label
+                        text: "Notes"
+                        font_style: "Title"
+                        role: "large"
+                        theme_text_color: "Custom"
+                        halign: "left"
+                        valign: "bottom"
+                        text_size: self.size
+                        size_hint_y: 1
+
+                # ── normal mode: single overflow menu button,
+                MDIconButton:
+                    id: options_button
+                    icon: "dots-vertical"
+                    theme_icon_color: "Custom"
+                    size_hint_x: None
+                    width: dp(48) if not root.selection_mode else 0
+                    opacity: 0 if root.selection_mode else 1
+                    disabled: root.selection_mode
+                    on_release: root.open_options_menu()
+
+                # ── selection mode: count + bulk delete + cancel ──
+                MDBoxLayout:
+                    id: selection_controls
+                    size_hint_x: None
+                    width: dp(190) if root.selection_mode else 0
+                    opacity: 1 if root.selection_mode else 0
+                    disabled: not root.selection_mode
+                    spacing: "4dp"
+
+                    MDLabel:
+                        id: selection_count_label
+                        text: "0 selected"
+                        theme_text_color: "Custom"
+                        halign: "right"
+                        valign: "bottom"
+
+                    MDIconButton:
+                        id: bulk_delete_button
+                        icon: "delete"
+                        theme_icon_color: "Custom"
+                        on_release: root.delete_selected_notes()
+
+                    MDIconButton:
+                        id: cancel_selection_button
+                        icon: "close"
+                        theme_icon_color: "Custom"
+                        on_release: root.toggle_selection_mode()
+
+            MDBoxLayout:
+                id: search_bar
+                size_hint_y: None
+                height: "52dp"
+                padding: "16dp", "6dp"
+
+                MDCard:
+                    orientation: "horizontal"
+                    padding: dp(14), dp(4)
+                    radius: [20]
+                    elevation: 1
+                    md_bg_color: 0.92, 0.84, 0.66, 1
+
+                    TextInput:
+                        id: search_field
+                        multiline: False
+                        hint_text: "Search notes..."
+                        font_size: "15sp"
+                        background_normal: ""
+                        background_active: ""
+                        background_color: 0, 0, 0, 0
+                        # Reduced top/bottom padding -- 10dp was leaving
+                        # too little vertical room for the text itself,
+                        # clipping the top of capital letters like "S".
+                        # Height/shape of the bar itself is unchanged.
+                        padding: dp(10), dp(6), dp(10), dp(6)
+                        on_text: root.search_notes(self.text)
+            
+            ScrollView:
+                id: category_filter_scroll
+                size_hint_y: None
+                height: dp(44)
+                do_scroll_x: True
+                do_scroll_y: False
+                bar_width: dp(2)
+
+                MDBoxLayout:
+                    id: category_filter_chips
+                    orientation: "horizontal"
+                    size_hint_x: None
+                    width: self.minimum_width
+                    padding: dp(12), dp(6)
+                    spacing: dp(8)
+
+            ScrollView:
+                size_hint: 1, 1
+
+                MDBoxLayout:
+                    id: notes_list
+                    orientation: "vertical"
+                    padding: "12dp"
+                    spacing: "10dp"
+                    adaptive_height: True
+
+        MDFabButton:
+            id: add_note_fab
+            icon: "plus"
+            pos_hint: {"right": 0.93, "y": 0.04}
+            theme_icon_color: "Custom"
+            on_release: root.open_note_editor()
+
+        MDFabButton:
+            id: recently_deleted_fab
+            icon: "delete-restore"
+            pos_hint: {"x": 0.07, "y": 0.04}
+            theme_icon_color: "Custom"
+            on_release: root.open_recently_deleted()
+            
+<NoteEditorScreen>:
+    name: "note_editor"
+
+    MDBoxLayout:
+        id: screen_container
+        orientation: "vertical"
+        size_hint: 1, 1
+
+        MDBoxLayout:
+            id: top_bar
+            size_hint_y: None
+            height: "56dp"
+            padding: "8dp", "4dp"
+            spacing: "2dp"
+
+            MDIconButton:
+                id: back_button
+                icon: "arrow-left"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').request_go_back()
+
+            MDLabel:
+                id: header_label
+                # Kept invisible/zero-width instead of deleted -- this
+                # id is still referenced by Nafisa's THEME_MAP, so
+                # removing the widget entirely could break her theming
+                # code. This way it simply takes up no layout space.
+                text: ""
+                theme_text_color: "Custom"
+                size_hint_x: None
+                width: 0
+                opacity: 0
+
+            # ── "view" tools: search, insert image, preview toggle ──
+            # ── icon cluster: scrolls horizontally instead of being
+            #    silently clipped when there's not enough width for
+            #    every icon (phones). On wide screens where everything
+            #    already fits, this ScrollView has nothing to scroll
+            #    and looks/behaves exactly like a normal row. ──
+            ScrollView:
+                id: top_bar_icons_scroll
+                size_hint: 1, 1
+                do_scroll_x: True
+                do_scroll_y: False
+                bar_width: dp(2)
+
+                MDBoxLayout:
+                    id: top_bar_icons
+                    orientation: "horizontal"
+                    size_hint_x: None
+                    size_hint_y: 1
+                    width: self.minimum_width
+                    spacing: "2dp"
+
+                    MDIconButton:
+                        id: search_button
+                        icon: "magnify"
+                        theme_icon_color: "Custom"
+                        on_release: app.root.get_screen('note_editor').toggle_search()
+
+                    MDIconButton:
+                        id: image_button
+                        icon: "image-plus"
+                        theme_icon_color: "Custom"
+                        on_release: app.root.get_screen('note_editor').pick_image()
+
+                    MDIconButton:
+                        id: preview_button
+                        icon: "eye-outline"
+                        theme_icon_color: "Custom"
+                        on_release: app.root.get_screen('note_editor').toggle_preview()
+
+                    MDIconButton:
+                        id: export_button
+                        icon: "export-variant"
+                        theme_icon_color: "Custom"
+                        on_release: app.root.get_screen('note_editor').export_note_as_txt()
+
+                    Widget:
+                        size_hint_x: None
+                        width: dp(10)
+
+                    MDIconButton:
+                        id: duplicate_button
+                        icon: "content-copy"
+                        theme_icon_color: "Custom"
+                        on_release: app.root.get_screen('note_editor').duplicate_note()
+
+                    Widget:
+                        size_hint_x: None
+                        width: dp(10)
+
+                    MDIconButton:
+                        id: delete_button
+                        icon: "delete"
+                        theme_icon_color: "Custom"
+                        on_release: app.root.get_screen('note_editor').delete_note()
+
+                    MDIconButton:
+                        id: save_button
+                        icon: "content-save"
+                        theme_icon_color: "Custom"
+                        on_release: app.root.get_screen('note_editor').save_note()
+
+        MDBoxLayout:
+            id: title_field_container
+            size_hint_y: None
+            height: "52dp"
+            padding: "16dp", "6dp"
+
+            MDCard:
+                orientation: "horizontal"
+                padding: dp(14), dp(4)
+                radius: [20]
+                elevation: 1
+                md_bg_color: 0.92, 0.84, 0.66, 1
+
+                TextInput:
+                    id: title_field
+                    multiline: False
+                    hint_text: "Title"
+                    font_size: "17sp"
+                    background_normal: ""
+                    background_active: ""
+                    background_color: 0, 0, 0, 0
+                    # Same padding values already proven correct on
+                    # the Notes list search bar -- avoids reintroducing
+                    # the earlier "top of capital letters clipped" bug.
+                    padding: dp(10), dp(6), dp(10), dp(6)
+        
+        MDBoxLayout:
+            id: category_pill_row
+            size_hint_y: None
+            height: dp(44)
+            padding: dp(16), dp(4)
+
+            CategoryPillButton:
+                id: category_pill
+                orientation: "horizontal"
+                size_hint_x: None
+                width: self.minimum_width
+                padding: dp(14), dp(4)
+                on_release: app.root.get_screen('note_editor').open_category_picker()
+                canvas.before:
+                    Color:
+                        rgba: 0.92, 0.84, 0.66, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [18, 18, 18, 18]
+
+                # AnchorLayout guarantees true centering, same
+                # technique already used successfully in Tabshira's
+                # DashboardTile (icon_container) -- more reliable than
+                # relying on BoxLayout's default cross-axis behavior.
+                AnchorLayout:
+                    size_hint_y: 1
+                    size_hint_x: None
+                    width: category_pill_label.width
+                    anchor_x: "center"
+                    anchor_y: "center"
+
+                    MDLabel:
+                        id: category_pill_label
+                        text: "+ Add category"
+                        font_style: "Label"
+                        role: "small"
+                        theme_text_color: "Custom"
+                        text_color: 0.29, 0.20, 0.15, 1
+                        adaptive_size: True
+
+        # ── live word/character count -- always visible regardless of
+        #    whether search is open, not tied to any toggle ──
+        MDBoxLayout:
+            id: word_count_row
+            size_hint_y: None
+            height: "26dp"
+            padding: "8dp", "0dp"
+
+            Widget:
+                # spacer -- pushes the count to the right
+
+            MDLabel:
+                id: word_count_label
+                text: "0 words · 0 chars"
+                theme_text_color: "Custom"
+                font_style: "Body"
+                role: "small"
+                halign: "right"
+                size_hint_x: None
+                width: dp(160)
+
+        # ── in-note search bar: collapses to nothing until the magnify
+        #    icon is tapped. Uses a plain TextInput instead of
+        #    MDTextField -- MDTextField reserves extra vertical space
+        #    for its floating hint label and draws its own border,
+        #    which made this look like a tall box nested inside the
+        #    card's own box. TextInput has no reserved hint space and
+        #    no border of its own, so the card reads as one compact,
+        #    wide bar instead of two overlapping rectangles. ──
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(56) if root.show_search else 0
+            opacity: 1 if root.show_search else 0
+            padding: dp(8), dp(4)
+
+            MDCard:
+                id: search_card
+                orientation: "horizontal"
+                padding: dp(10), dp(4)
+                spacing: dp(6)
+                radius: [16]
+                elevation: 1
+
+                TextInput:
+                    id: search_query_field
+                    multiline: False
+                    hint_text: "Find in note..."
+                    font_size: "14sp"
+                    size_hint_x: 1
+                    background_normal: ""
+                    background_active: ""
+                    background_color: 0, 0, 0, 0
+                    padding: dp(6), dp(6), dp(6), dp(6)
+                    on_text: app.root.get_screen('note_editor').on_search_text_change(self.text)
+
+                MDLabel:
+                    id: search_match_label
+                    text: "0/0"
+                    theme_text_color: "Custom"
+                    size_hint_x: None
+                    width: dp(42)
+                    halign: "center"
+
+                MDIconButton:
+                    id: search_prev_button
+                    icon: "chevron-up"
+                    theme_icon_color: "Custom"
+                    size_hint: None, None
+                    size: dp(36), dp(36)
+                    on_release: app.root.get_screen('note_editor').search_prev()
+
+                MDIconButton:
+                    id: search_next_button
+                    icon: "chevron-down"
+                    theme_icon_color: "Custom"
+                    size_hint: None, None
+                    size: dp(36), dp(36)
+                    on_release: app.root.get_screen('note_editor').search_next()
+
+                MDIconButton:
+                    id: search_close_button
+                    icon: "close"
+                    theme_icon_color: "Custom"
+                    size_hint: None, None
+                    size: dp(36), dp(36)
+                    on_release: app.root.get_screen('note_editor').toggle_search()
+
+        # ── formatting toolbar: undo/redo, bold, italic, underline,
+        #    highlight, alignment, font size, font family ──
+        # ── docked slot: holds the formatting toolbar here when the
+        #    window is wide enough (tablet) -- empty and zero-height
+        #    when the toolbar has been moved to float at the bottom ──
+        MDBoxLayout:
+            id: toolbar_top_slot
+            size_hint_y: None
+            height: dp(48) if not root.is_compact else 0
+            padding: "8dp", "4dp"
+
+            FormattingToolbar:
+                id: formatting_toolbar
+
+        # ── editor_body: wraps the content card and the bottom
+        #    floating-toolbar slot together, since a floating overlay
+        #    needs a FloatLayout/AnchorLayout, not a plain vertical box ──
+        FloatLayout:
+            id: editor_body
+            size_hint: 1, 1
+
+            MDCard:
+                id: content_card
+                orientation: "vertical"
+                size_hint: 1, None
+                # Leaves room at the bottom for the floating toolbar
+                # only when it's actually floating there -- otherwise
+                # fills the whole body like before.
+                height: self.parent.height - (dp(76) if root.is_compact else 0)
+                pos_hint: {"x": 0, "top": 1}
+                padding: "20dp"
+                radius: [20, 20, 20, 20]
+                elevation: 1
+
+                MDBoxLayout:
+                    id: content_container
+                    orientation: "vertical"
+                    size_hint: 1, 1
+
+                    TextInput:
+                        id: content_field
+                        multiline: True
+                        size_hint: 1, 1
+                        font_size: "16sp"
+                        hint_text: "Once upon a note..."
+                        background_normal: ""
+                        background_active: ""
+                        padding: dp(8), dp(8), dp(8), dp(8)
+
+            # ── floating slot: only visible/reachable when compact --
+            #    anchors the toolbar near the bottom edge with a
+            #    comfortable margin on all sides for the "floating" look ──
+            AnchorLayout:
+                id: toolbar_bottom_slot
+                size_hint: 1, None
+                height: dp(76) if root.is_compact else 0
+                anchor_x: "center"
+                anchor_y: "bottom"
+                padding: dp(12)
+
+<FormattingToolbar>:
+    orientation: "vertical"
+    size_hint_y: None
+    height: dp(56) if root.is_compact else dp(48)
+    padding: (dp(6), dp(4)) if root.is_compact else (dp(4), dp(2))
+    radius: [20] if root.is_compact else [0]
+    elevation: 6 if root.is_compact else 0
+    md_bg_color: (0.92, 0.84, 0.66, 1) if root.is_compact else (0, 0, 0, 0)
+
+    ScrollView:
+        id: toolbar_icons_scroll
+        size_hint: 1, 1
+        do_scroll_x: True
+        do_scroll_y: False
+        bar_width: dp(2)
+
+        MDBoxLayout:
+            id: toolbar_icons
+            orientation: "horizontal"
+            size_hint_x: None
+            size_hint_y: 1
+            width: self.minimum_width
+            padding: dp(8), 0
+            spacing: dp(4)
+
+            MDIconButton:
+                id: undo_button
+                icon: "undo"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').undo_note()
+
+            MDIconButton:
+                id: redo_button
+                icon: "redo"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').redo_note()
+
+            Widget:
+                size_hint_x: None
+                width: dp(16)
+
+            MDIconButton:
+                id: bold_button
+                icon: "format-bold"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').make_bold()
+
+            MDIconButton:
+                id: italic_button
+                icon: "format-italic"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').make_italic()
+
+            MDIconButton:
+                id: underline_button
+                icon: "format-underline"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').make_underline()
+
+            MDIconButton:
+                id: highlight_button
+                icon: "marker"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').make_highlight()
+
+            MDIconButton:
+                id: link_button
+                icon: "link-variant"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').make_link()
+
+            Widget:
+                size_hint_x: None
+                width: dp(16)
+
+            MDIconButton:
+                id: align_left_button
+                icon: "format-align-left"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').set_align_left()
+
+            MDIconButton:
+                id: align_center_button
+                icon: "format-align-center"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').set_align_center()
+
+            MDIconButton:
+                id: align_right_button
+                icon: "format-align-right"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').set_align_right()
+
+            Widget:
+                size_hint_x: None
+                width: dp(16)
+
+            MDIconButton:
+                id: font_decrease_button
+                icon: "format-font-size-decrease"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').decrease_font_size()
+
+            MDIconButton:
+                id: font_increase_button
+                icon: "format-font-size-increase"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').increase_font_size()
+
+            MDIconButton:
+                id: font_cycle_button
+                icon: "format-font"
+                theme_icon_color: "Custom"
+                on_release: app.root.get_screen('note_editor').cycle_font()
+
+<RecentlyDeletedScreen>:
+    name: "recently_deleted"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        size_hint: 1, 1
+
+        MDFloatLayout:
+            id: top_bar
+            size_hint_y: None
+            height: "56dp"
+
+            MDIconButton:
+                id: back_button
+                icon: "arrow-left"
+                theme_icon_color: "Custom"
+                pos_hint: {"x": 0, "center_y": 0.5}
+                on_release: root.go_home()
+
+            MDLabel:
+                id: header_label
+                text: "Recently Deleted"
+                font_style: "Title"
+                role: "large"
+                theme_text_color: "Custom"
+                halign: "center"
+                valign: "bottom"
+                text_size: self.size
+                size_hint: 1, 1
+                pos_hint: {"x": 0, "y": 0}
+
+        ScrollView:
+            size_hint: 1, 1
+
+            MDBoxLayout:
+                id: trash_list
+                orientation: "vertical"
+                padding: "12dp"
+                spacing: "10dp"
+                adaptive_height: True

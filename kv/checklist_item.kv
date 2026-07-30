@@ -178,16 +178,16 @@
         BoxLayout:
             orientation: "vertical"
             size_hint_y: None
-            height: self.minimum_height if root.due_date or root.link else 0
-            opacity: 1 if root.due_date or root.link else 0
+            height: self.minimum_height if root.due_date or root.due_time or root.link else 0
+            opacity: 1 if root.due_date or root.due_time or root.link else 0
             padding: [58, 0, 0, 0]
             spacing: 2
 
             Label:
-                text: "📅 " + root.format_due_date(root.due_date)
+                text: "📅 " + root.format_due_details()
                 size_hint_y: None
-                height: 22 if root.due_date else 0
-                opacity: 1 if root.due_date else 0
+                height: 22 if root.due_date or root.due_time else 0
+                opacity: 1 if root.due_date or root.due_time else 0
                 color: 0.43, 0.41, 0.38, 1
                 font_size: 12
                 halign: "left"
@@ -195,7 +195,7 @@
                 text_size: self.size
 
             Label:
-                text: "[u]🔗 Open attachment[/u]"
+                text: "[u]🔗 Open embedded link[/u]"
                 markup: True
                 size_hint_y: None
                 height: 22 if root.link else 0
