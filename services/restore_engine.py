@@ -112,18 +112,7 @@ def _populate_notes(notes, category_id_map):
 def _populate_tasks(tasks):
     id_map = {}
     for task in tasks:
-        new_id = create_tasks(
-            title=task["title"],
-            user_id=task["user_id"],
-            priority=task.get("priority", "Medium"),
-            due_date=task.get("due_date"),
-            due_time=task.get("due_time"),
-            category=task.get("category", "Study"),
-            link=task.get("link", ""),
-            carry_forward=task.get("carry_forward", 1),
-            notify_enabled=task.get("notify_enabled", 0),
-            schedule_reminder=False,
-        )
+        new_id = create_tasks(task["title"], task["user_id"])
         id_map[task["id"]] = new_id
     return id_map
 

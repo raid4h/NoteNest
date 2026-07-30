@@ -34,7 +34,7 @@ from screens.editor.paths import DEFAULT_NOTEBOOK_ID
 # The current manifest format version. Bump this only when the
 # structure of the "data" section below actually changes shape (a
 # field added/removed/renamed) -- not for every code change.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 1
 
 # The app doesn't yet have real multi-user accounts (no
 # user_queries.py, no login screen) -- categories and tasks still

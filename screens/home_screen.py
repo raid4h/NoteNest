@@ -2,7 +2,7 @@ import random
 from datetime import datetime, timedelta
 from kivymd.uix.screen import MDScreen
 from database.notes_queries import get_all_notes
-from database.task_queries import get_tasks_by_date
+from database.task_queries import get_all_tasks
 from kivy.utils import get_color_from_hex
 from kivymd.app import MDApp
 from kivy.properties import ListProperty
@@ -117,11 +117,8 @@ class HomeScreen(ThemedScreenMixin, MDScreen):
         # Tasks due today
         try:
             today_str = datetime.now().strftime("%Y-%m-%d")
-            due_today = [
-                task
-                for task in get_tasks_by_date(today_str)
-                if not task.get("completed", False)
-            ]
+            all_tasks = get_all_tasks(user_id)
+            due_today = [t for t in all_tasks if t[4] == today_str and t[3] == 0]
             due_count = len(due_today)
             self.ids.tasks_tile.stat_text = f"{due_count} due today" if due_count else "Nothing due today"
         except Exception:
