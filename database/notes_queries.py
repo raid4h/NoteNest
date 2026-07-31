@@ -1,15 +1,16 @@
 from database.db import get_connection
+from datetime import datetime
 
-def create_notes(notebook_id, title, content, category_id=None, is_pinned=0, is_archived=0):
+def create_notes(notebook_id, title, content, category_id=None, is_pinned=0, is_archived=0, task_id=None):
     conn = get_connection()
     cursor = conn.cursor()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute('''
-        INSERT INTO notes (notebook_id, title, content, category_id, is_pinned, is_archived)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (notebook_id, title, content, category_id, is_pinned, is_archived))
-    note_id=cursor.lastrowid
+    INSERT INTO notes (notebook_id, title, content, category_id, is_pinned, is_archived, created_at, updated_at, task_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (notebook_id, title, content, category_id, is_pinned, is_archived, now, now, task_id))
+    note_id = cursor.lastrowid
     conn.commit()
-    note_id=cursor.lastrowid
     conn.close()
     return note_id
 def get_all_notes(notebook_id):
@@ -33,13 +34,14 @@ def get_notes_by_id(note_id):
     note=cursor.fetchone()
     conn.close()
     return note
-def update_notes(note_id,title,content):
-    conn=get_connection()
-    cursor=conn.cursor()
+def update_notes(note_id, title, content):
+    conn = get_connection()
+    cursor = conn.cursor()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute('''
-    UPDATE notes SET title=?, content=?, updated_at=CURRENT_TIMESTAMP
-    WHERE id=?               
-    ''',(title,content,note_id))
+        UPDATE notes SET title=?, content=?, updated_at=?
+        WHERE id=?               
+    ''', (title, content, now, note_id))
     conn.commit()
     conn.close()
 def delete_notes(note_id):
@@ -103,5 +105,14 @@ def duplicate_notes(note_id):
     category_id = og_note[8]
     
     create_notes(notebook_id,title,content,category_id=category_id)
-    
-    
+def get_notes_by_task(task_id):
+    conn=get_connection()
+    cursor=conn.cursor()
+    cursor.execute('''
+    SELECT * FROM notes
+    WHERE task_id=?
+    ORDER BY updated_at DESC
+    ''',(task_id,))
+    notes=cursor.fetchall()
+    conn.close()
+    return notes

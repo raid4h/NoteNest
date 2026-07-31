@@ -4,28 +4,31 @@ DB_NAME = "MyApp.db"
 
 
 def get_connection():
-    conn = sqlite3.connect(DB_NAME)
-    return conn
+    return sqlite3.connect(DB_NAME)
 
 
 def _column_names(cursor, table_name):
     return {
         row[1]
-        for row in cursor.execute(f"PRAGMA table_info({table_name})").fetchall()
+        for row in cursor.execute(
+            f"PRAGMA table_info({table_name})"
+        ).fetchall()
     }
 
 
 def _add_missing_columns(cursor, table_name, columns):
     existing = _column_names(cursor, table_name)
+
     for column_name, definition in columns.items():
         if column_name not in existing:
             cursor.execute(
-                f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}"
+                f"ALTER TABLE {table_name} "
+                f"ADD COLUMN {column_name} {definition}"
             )
 
 
 def create_tables():
-    """Create the database and safely migrate older NoteNest databases."""
+    """Create tables and migrate older NoteNest databases safely."""
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -39,6 +42,7 @@ def create_tables():
         )
         """
     )
+
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS notebooks(
@@ -50,6 +54,7 @@ def create_tables():
         )
         """
     )
+
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS categories(
@@ -60,21 +65,7 @@ def create_tables():
         )
         """
     )
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS notes(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            notebook_id INTEGER REFERENCES notebooks(id),
-            title TEXT NOT NULL,
-            content TEXT,
-            is_pinned INTEGER DEFAULT 0,
-            is_archived INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            category_id INTEGER REFERENCES categories(id)
-        )
-        """
-    )
+
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS tasks(
@@ -86,6 +77,8 @@ def create_tables():
             user_id INTEGER REFERENCES users(id),
             due_time TEXT,
             category TEXT DEFAULT 'Study',
+            category_id INTEGER REFERENCES categories(id),
+            activity_type TEXT DEFAULT 'task',
             link TEXT DEFAULT '',
             carry_forward INTEGER DEFAULT 1,
             notify_enabled INTEGER DEFAULT 0,
@@ -93,17 +86,37 @@ def create_tables():
         )
         """
     )
+
     _add_missing_columns(
         cursor,
         "tasks",
         {
             "due_time": "TEXT",
             "category": "TEXT DEFAULT 'Study'",
+            "category_id": "INTEGER REFERENCES categories(id)",
+            "activity_type": "TEXT DEFAULT 'task'",
             "link": "TEXT DEFAULT ''",
             "carry_forward": "INTEGER DEFAULT 1",
             "notify_enabled": "INTEGER DEFAULT 0",
             "completed_at": "TIMESTAMP",
         },
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS notes(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            notebook_id INTEGER REFERENCES notebooks(id),
+            title TEXT NOT NULL,
+            content TEXT,
+            is_pinned INTEGER DEFAULT 0,
+            is_archived INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            category_id INTEGER REFERENCES categories(id),
+            task_id INTEGER REFERENCES tasks(id)
+        )
+        """
     )
 
     cursor.execute(
@@ -116,6 +129,7 @@ def create_tables():
         )
         """
     )
+
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS reminders(
@@ -128,11 +142,29 @@ def create_tables():
     )
 
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)"
+        """
+        CREATE TABLE IF NOT EXISTS pomodoro_sessions(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task_id INTEGER REFERENCES tasks(id),
+            started_at TIMESTAMP,
+            completed INTEGER DEFAULT 0,
+            duration INTEGER
+        )
+        """
     )
+
     cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_reminders_active_time "
-        "ON reminders(is_active, remind_at)"
+        """
+        CREATE INDEX IF NOT EXISTS idx_tasks_due_date
+        ON tasks(due_date)
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_reminders_active_time
+        ON reminders(is_active, remind_at)
+        """
     )
 
     conn.commit()

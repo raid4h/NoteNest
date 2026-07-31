@@ -13,7 +13,7 @@
         orientation: "horizontal"
         padding: dp(18), dp(14)
         spacing: dp(14)
-        
+
         AnchorLayout:
             size_hint_x: None
             width: dp(52)
@@ -24,7 +24,7 @@
                 id: icon_container
                 theme_bg_color: "Custom"
                 size_hint: None, None
-                size: dp(52), dp(52)
+                size: dp(44), dp(44)
                 radius: [16]
                 pos_hint: {"center_y": 0.5}
 
@@ -37,12 +37,13 @@
                         icon: root.icon_name
                         theme_icon_color: "Custom"
                         size_hint: None, None
-                        size: dp(40), dp(40)
+                        size: dp(32), dp(32)
                         on_release: root.on_release()
 
         AnchorLayout:
             anchor_x: "center"
             anchor_y: "center"
+            size_hint_x: 1
 
             MDBoxLayout:
                 orientation: "vertical"
@@ -57,6 +58,9 @@
                     font_style: "Title"
                     role: "medium"
                     adaptive_height: True
+                    text_size: self.width, None
+                    shorten: True
+                    shorten_from: 'right'
 
                 MDLabel:
                     id: tile_subtitle
@@ -66,6 +70,10 @@
                     font_style: "Body"
                     role: "small"
                     adaptive_height: True
+                    text_size: self.width, None
+                    shorten: True
+                    shorten_from: 'right'
+
 
         MDBoxLayout:
             orientation: "vertical"
@@ -73,7 +81,7 @@
             width: dp(60)
             spacing: dp(0)
             pos_hint: {"center_y": 0.5}
-            
+
             MDLabel:
                 id: stat_number
                 text: root.stat_number
@@ -142,192 +150,94 @@
             role: "small"
             adaptive_height: True
 
-<Streak>:
-    orientation: "vertical"
-    size_hint: None, None
-    size: dp(36), dp(48)
-    spacing: dp(6)
-
-    MDCard:
-        id: dot
-        theme_bg_color: "Custom"
-        size_hint: None, None
-        size: dp(28), dp(28)
-        radius: [14]
-        elevation: 0
-        pos_hint: {"center_x": 0.5}
-
-    MDLabel:
-        id: day_label
-        text: root.day_letter
-        theme_text_color: "Custom"
-        font_style: "Label"
-        role: "small"
-        halign: "center"
-        size_hint_y: None
-        height: dp(14)
 
 <HomeScreen>:
     MDBoxLayout:
         id: drawer_layout
         orientation: "vertical"
+        padding: dp(20), dp(16), dp(20), dp(24)
+        spacing: dp(16)
 
-        ScrollView:
-            do_scroll_x: False
+        # ── top row: greeting + settings ──
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            adaptive_height: True
 
             MDBoxLayout:
                 orientation: "vertical"
-                padding: dp(20), dp(16), dp(20), dp(24)
-                spacing: dp(16)
-                adaptive_height: True
 
-                # ── top row: greeting + settings ──
-                MDBoxLayout:
-                    size_hint_y: None
-                    height: dp(56)
+                MDLabel:
+                    id: date_label
+                    text: ""
+                    theme_text_color: "Custom"
+                    font_style: "Body"
+                    role: "small"
+                    adaptive_height: True
+                    text_size: self.width, None
+                    shorten: True
+                    shorten_from: 'right'
 
-                    MDBoxLayout:
-                        orientation: "vertical"
+                MDLabel:
+                    id: greeting_label
+                    text: "Good evening"
+                    theme_text_color: "Custom"
+                    font_style: "Title"
+                    role: "large"
+                    adaptive_height: True
+                    text_size: self.width, None
+                    shorten: True
+                    shorten_from: 'right'
 
-                        MDLabel:
-                            id: date_label
-                            text: ""
-                            theme_text_color: "Custom"
-                            font_style: "Body"
-                            role: "small"
-                            adaptive_height: True
+            MDIconButton:
+                id: menu_button
+                icon: "cog-outline"
+                theme_icon_color: "Custom"
+                pos_hint: {"center_y": 0.5}
+                on_release: root.open_settings()
+        
+         # ── Continue Studying (only shown when there's an active session) ──
+        MDBoxLayout:
+            id: continue_studying_container
+            orientation: "vertical"
+            spacing: dp(16)
+            size_hint_y: None
+            adaptive_height: True
 
-                        MDLabel:
-                            id: greeting_label
-                            text: "Good evening"
-                            theme_text_color: "Custom"
-                            font_style: "Title"
-                            role: "large"
-                            adaptive_height: True
+        # ── hero tile: Up next ──
+        MDLabel:
+            text: "Next Up"
+            theme_text_color: "Custom"
+            font_style: "Title"
+            role: "small"
+            adaptive_height: True
 
-                    MDIconButton:
-                        id: menu_button
-                        icon: "cog-outline"
-                        theme_icon_color: "Custom"
-                        pos_hint: {"center_y": 0.5}
-                        on_release: root.open_settings()
+        DashboardTile:
+            id: up_next_tile
+            label: ""
+            subtitle: ""
+            icon_name: "calendar-clock-outline"
 
-                # ── rotating quote card ──
-                MDCard:
-                    id: quote_card
-                    theme_bg_color: "Custom"
-                    radius: [16]
-                    elevation: 0
-                    size_hint_y: None
-                    height: dp(64)
-                    padding: dp(24), dp(10)
+        Widget:
 
-                    MDLabel:
-                        id: quote_label
-                        text: ""
-                        theme_text_color: "Custom"
-                        font_style: "Body"
-                        role: "small"
-                        italic: True
-                        halign: "center"
-                        valign: "middle"
-                        text_size: self.size
+        # ── Today's Plan ──
+        MDLabel:
+            text: "Today's Plan"
+            theme_text_color: "Custom"
+            font_style: "Title"
+            role: "small"
+            adaptive_height: True
 
-                # ── hero tile: Notes ──
-                DashboardTile:
-                    id: notes_tile
-                    label: "Notes"
-                    subtitle: "Write and organize your ideas"
-                    stat_text: ""
-                    icon_name: "notebook-outline"
-                    target_screen: "notes"
-                    on_release: root.go_to("notes")
-                    pos_hint: {"center_y": 0.5}
+        MDCard:
+            id: today_plan_card
+            theme_bg_color: "Custom"
+            radius: [16]
+            elevation: 0
+            size_hint_y: None
+            height: today_plan_list.height + dp(28)
+            padding: dp(14)
 
-                # ── small tiles row: Pomodoro + Tasks ──
-                MDBoxLayout:
-                    size_hint_y: None
-                    height: dp(120)
-                    spacing: dp(14)
-
-                    SmallTile:
-                        id: pomodoro_tile
-                        label: "Pomodoro"
-                        stat_text: ""
-                        icon_name: "timer-sand"
-                        target_screen: "timer"
-                        accent_token: "tile_accent_pomodoro"
-                        on_release: root.go_to("timer")
-
-                    SmallTile:
-                        id: tasks_tile
-                        label: "Tasks"
-                        stat_text: ""
-                        icon_name: "calendar-check-outline"
-                        target_screen: "calendar"
-                        accent_token: "tile_accent_tasks"
-                        on_release: root.go_to("calendar")
-                
-                MDCard:
-                    id: streak_card
-                    theme_bg_color: "Custom"
-                    radius: [16]
-                    elevation: 0
-                    size_hint_y: None
-                    height: dp(110)
-                    padding: dp(16), dp(12)
-
-                    MDBoxLayout:
-                        orientation: "vertical"
-                        spacing: dp(10)
-
-                        MDLabel:
-                            id: streak_title
-                            text: "This week"
-                            theme_text_color: "Custom"
-                            font_style: "Title"
-                            role: "small"
-                            adaptive_height: True
-
-                        MDBoxLayout:
-                            id: streak_row
-                            orientation: "horizontal"
-                            spacing: dp(10)
-                            size_hint_y: None
-                            height: dp(48)
-
-                # ── last edited strip ──
-                MDBoxLayout:
-                    orientation: "vertical"
-                    size_hint_y: None
-                    height: dp(44)
-
-                    Widget:
-                        id: last_edited_divider
-                        size_hint_y: None
-                        height: dp(1)
-                        canvas.before:
-                            Color:
-                                rgba: root.divider_color
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-
-                    MDBoxLayout:
-                        orientation: "horizontal"
-                        padding: dp(4), dp(10), dp(4), dp(0)
-
-                        MDLabel:
-                            id: last_edited_static_label
-                            text: "Last edited"
-                            theme_text_color: "Custom"
-                            font_style: "Label"
-                            role: "small"
-
-                        MDLabel:
-                            id: last_edited_label
-                            text: ""
-                            theme_text_color: "Custom"
-                            font_style: "Label"
-                            role: "small"
-                            halign: "right"
+            MDBoxLayout:
+                id: today_plan_list
+                orientation: "vertical"
+                spacing: dp(6)
