@@ -38,7 +38,6 @@ from screens.editor.image_mixin import ImageAttachmentMixin
 from screens.editor.link_mixin import HyperlinkMixin
 from screens.editor.export_mixin import ExportMixin
 from screens.editor.delete_mixin import DeleteConfirmationMixin
-from screens.editor.calculator import process_calculator_lines, format_calculated_number
 from screens.editor.category_mixin import CategoryMixin, CategoryPillButton  # noqa: F401
 from screens.editor.delete_mixin import DeleteConfirmationMixin
 
@@ -284,12 +283,7 @@ class NoteEditorScreen(
         self._preview_link_map = {}
         self._link_ref_counter = 0
 
-        # Calculator pass -- runs on the whole note's text BEFORE
-        # splitting on image tokens, so the grand total accounts for
-        # every line regardless of where a photo sits in the note.
-        display_text, grand_total, uses_currency = process_calculator_lines(raw)
-
-        parts = IMAGE_TOKEN_PATTERN.split(display_text)
+        parts = IMAGE_TOKEN_PATTERN.split(raw)
 
         for i, part in enumerate(parts):
             if i % 2 == 1:
@@ -319,21 +313,6 @@ class NoteEditorScreen(
                 label.bind(on_ref_press=self._on_preview_link_pressed)
                 self._preview_content.add_widget(label)
 
-        # Grand total, shown once at the very end of the preview --
-        # only appears at all if at least one number was found
-        # anywhere in the note.
-        if grand_total is not None:
-            currency_prefix = "$" if uses_currency else ""
-            total_label = Label(
-                text=f"[b]Total: {currency_prefix}{format_calculated_number(grand_total)}[/b]",
-                markup=True, size_hint_y=None, color=(0.29, 0.20, 0.15, 1),
-                halign=self.ids.content_field.halign, valign="top",
-                font_size=self.ids.content_field.font_size,
-                font_name=self.ids.content_field.font_name,
-            )
-            total_label.bind(width=lambda inst, val: setattr(inst, "text_size", (val, None)))
-            total_label.bind(texture_size=lambda inst, val: setattr(inst, "height", val[1]))
-            self._preview_content.add_widget(total_label)
 
         container = self.ids.content_container
         if self.ids.content_field.parent is not None:
