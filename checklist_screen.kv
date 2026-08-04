@@ -6,6 +6,12 @@
 # checklist_screen.py. Individual checklist items are NOT shown or
 # added here anymore -- tapping a card navigates to
 # checklist_detail_screen.kv for that.
+#
+# UI-only pass: card-level alignment (title/delete button) was fixed
+# in widgets/checklist_card.py itself, not here -- this screen only
+# arranges the top bar, scrollable list, and add bar around it.
+# Minor polish: add_bar padding tightened slightly and top_bar spacing
+# nudged for a bit more breathing room around the header text.
 
 <ChecklistScreen>:
 
@@ -19,7 +25,7 @@
             id: top_bar
             size_hint_y: None
             height: dp(56)
-            spacing: dp(8)
+            spacing: dp(10)
 
             MDIconButton:
                 id: back_button
@@ -65,7 +71,7 @@
             orientation: "horizontal"
             size_hint_y: None
             height: dp(56)
-            padding: dp(6)
+            padding: dp(4)
             radius: [16]
             elevation: 1
 

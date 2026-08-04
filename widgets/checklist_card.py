@@ -3,10 +3,18 @@ widgets/checklist_card.py
 
 Summary card for one checklist, shown on the main Checklist screen
 (screens/checklist_screen.py). Displays title, an item-count summary,
-and optional category/priority chips -- tapping the card opens that
+and an optional priority chip -- tapping the card opens that
 checklist's items on screens/checklist_detail_screen.py. A small
 delete button sits in the corner rather than requiring a separate
-screen/popup just to remove a checklist. category
+screen/popup just to remove a checklist.
+
+UI-only pass, round 2: title and delete button were being centered by
+two DIFFERENT mechanisms (title via Label valign, delete button via
+AnchorLayout) -- those don't necessarily land on the same pixel row,
+which is what was still reading as misaligned even after round 1's
+padding fix. Both now use the same fixed-height-row + pos_hint
+center_y approach, so they're guaranteed to align on the same line.
+No logic changed.
 """
 
 from kivy.metrics import dp, sp
@@ -27,9 +35,6 @@ def theme_rgba(token):
     return get_color_from_hex(theme_manager.get_color(token))
 
 
-# Same fixed priority vocabulary/colors as before -- independent of
-# theme/palettes.py on purpose, these are pastel tag colors, not
-# app-theme colors.
 PRIORITY_COLORS = {
     "Low": "#B7D6A8",
     "Medium": "#F0CD8A",
@@ -39,8 +44,7 @@ DEFAULT_CATEGORY_CHIP_COLOR = "#C9C0E8"
 
 
 class _Chip(BoxLayout):
-    """Small rounded pill, read-only display (tapping the card opens
-    the picker on create/edit -- chips here are just labels)."""
+    """Small rounded pill, read-only display."""
 
     def __init__(self, label_text, bg_hex, **kwargs):
         kwargs.setdefault("size_hint", (None, None))
@@ -86,9 +90,9 @@ class ChecklistCard(ButtonBehavior, BoxLayout):
     def __init__(self, **kwargs):
         kwargs.setdefault("orientation", "vertical")
         kwargs.setdefault("size_hint_y", None)
-        kwargs.setdefault("height", dp(92))
-        kwargs.setdefault("spacing", dp(4))
-        kwargs.setdefault("padding", [dp(14), dp(10), dp(10), dp(10)])
+        kwargs.setdefault("height", dp(100))
+        kwargs.setdefault("spacing", dp(6))
+        kwargs.setdefault("padding", [dp(16), dp(14), dp(12), dp(12)])
         super().__init__(**kwargs)
 
         with self.canvas.before:
@@ -98,21 +102,30 @@ class ChecklistCard(ButtonBehavior, BoxLayout):
             self._card_border = Line(width=1)
         self.bind(pos=self._update_canvas, size=self._update_canvas)
 
-        top_row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(30), spacing=dp(8))
+        top_row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(34), spacing=dp(8))
 
+        # size_hint_y=None + explicit height + pos_hint center_y is
+        # the SAME centering mechanism the delete button below uses
+        # (via its AnchorLayout) -- guarantees both land on the exact
+        # same row instead of two different "centered" calculations
+        # potentially disagreeing by a few pixels.
         self.title_label = Label(
             text=self.title,
             font_size=sp(16),
             bold=True,
             halign="left",
             valign="middle",
-            size_hint_x=1,
+            size_hint=(1, None),
+            height=dp(24),
+            pos_hint={"center_y": 0.5},
             shorten=True,
             shorten_from="right",
         )
         self.title_label.bind(size=self.title_label.setter("text_size"))
         top_row.add_widget(self.title_label)
 
+        from kivy.uix.anchorlayout import AnchorLayout
+        delete_anchor = AnchorLayout(size_hint=(None, 1), width=dp(32), anchor_x="center", anchor_y="center")
         self.delete_btn = MDIconButton(
             icon="trash-can-outline",
             theme_icon_color="Custom",
@@ -120,7 +133,8 @@ class ChecklistCard(ButtonBehavior, BoxLayout):
             size=(dp(28), dp(28)),
         )
         self.delete_btn.bind(on_release=lambda *_a: self._request_delete())
-        top_row.add_widget(self.delete_btn)
+        delete_anchor.add_widget(self.delete_btn)
+        top_row.add_widget(delete_anchor)
 
         self.add_widget(top_row)
 

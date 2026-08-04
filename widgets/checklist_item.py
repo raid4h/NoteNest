@@ -2,17 +2,12 @@
 widgets/checklist_item.py
 
 Individual item/sub-item widgets used inside a single checklist's
-detail screen. Built entirely in Python (no companion kv file) so
-they follow theme_manager. No category/priority here anymore -- those
-now belong to the checklist as a whole (see widgets/checklist_card.py
-and screens/checklist_detail_screen.py), not to individual items, per
-the simplified spec.
+detail screen (screens/checklist_detail_screen.py). Visual-only pass:
+fixes the invisible expand chevron (icon_color was never set) and
+aligns checkbox/title/sub-items on consistent indentation.
 
-External contract (kept close to before, minus the removed fields):
-  - text, checked: plain properties
-  - subtasks: ListProperty of {"text":..., "checked":...} dicts,
-    optionally with an "id" once persisted
-  - on_toggle_complete: callable(checked) the screen assigns
+Public API unchanged (text, checked, subtasks, on_toggle_complete,
+add_subtask) -- screens/checklist_detail_screen.py needs no edits.
 """
 
 from kivy.metrics import dp, sp
@@ -33,6 +28,15 @@ from theme.theme_manager import theme_manager
 
 def theme_rgba(token):
     return get_color_from_hex(theme_manager.get_color(token))
+
+
+# Indentation shared by every sub-item row and the "add a sub-item"
+# input, so they all line up under the MAIN row's checkbox, not the
+# container's left edge -- matches the reference image's nesting.
+_MAIN_ROW_PADDING_LEFT = dp(12)
+_EXPAND_BTN_WIDTH = dp(30)
+_ROW_SPACING = dp(10)
+_SUBITEM_INDENT = _MAIN_ROW_PADDING_LEFT + _EXPAND_BTN_WIDTH + _ROW_SPACING
 
 
 class CheckCircle(ButtonBehavior, Widget):
@@ -75,7 +79,8 @@ class CheckCircle(ButtonBehavior, Widget):
 
 
 class SubChecklistItem(BoxLayout):
-    """One sub-item row -- checkbox + label, indented under its parent item."""
+    """One sub-item row -- checkbox + label, indented to align under
+    the parent item's checkbox (see _SUBITEM_INDENT above)."""
 
     text = StringProperty("")
     checked = BooleanProperty(False)
@@ -84,14 +89,15 @@ class SubChecklistItem(BoxLayout):
     def __init__(self, **kwargs):
         kwargs.setdefault("orientation", "horizontal")
         kwargs.setdefault("size_hint_y", None)
-        kwargs.setdefault("height", dp(32))
-        kwargs.setdefault("spacing", dp(10))
-        kwargs.setdefault("padding", [dp(48), 0, dp(10), 0])
+        kwargs.setdefault("height", dp(34))
+        kwargs.setdefault("spacing", _ROW_SPACING)
+        kwargs.setdefault("padding", [_SUBITEM_INDENT, 0, dp(10), 0])
         super().__init__(**kwargs)
 
-        self.check = CheckCircle(diameter=dp(17))
+        self.check = CheckCircle(diameter=dp(18))
         self.check.checked = self.checked
         self.check.bind(on_release=lambda *_a: self._toggle())
+        self.check.pos_hint = {"center_y": 0.5}
         self.add_widget(self.check)
 
         self.label = Label(
@@ -150,7 +156,7 @@ class ChecklistItem(BoxLayout):
 
         self.subtask_container = BoxLayout(
             orientation="vertical", size_hint_y=None, spacing=dp(2),
-            padding=[0, dp(2), 0, dp(6)],
+            padding=[0, dp(4), 0, dp(8)],
         )
         self.subtask_container.bind(minimum_height=self.subtask_container.setter("height"))
         self.add_widget(self.subtask_container)
@@ -175,16 +181,17 @@ class ChecklistItem(BoxLayout):
         row = BoxLayout(
             orientation="horizontal",
             size_hint_y=None,
-            height=dp(48),
-            spacing=dp(10),
-            padding=[dp(12), dp(8), dp(12), dp(2)],
+            height=dp(50),
+            spacing=_ROW_SPACING,
+            padding=[_MAIN_ROW_PADDING_LEFT, 0, dp(12), 0],
         )
 
         self.expand_btn = MDIconButton(
             icon="chevron-right",
             theme_icon_color="Custom",
+            icon_color=theme_rgba(TEXT_SECONDARY),
             size_hint=(None, None),
-            size=(dp(30), dp(30)),
+            size=(_EXPAND_BTN_WIDTH, _EXPAND_BTN_WIDTH),
             pos_hint={"center_y": 0.5},
         )
         self.expand_btn.bind(
@@ -194,6 +201,7 @@ class ChecklistItem(BoxLayout):
 
         self.check = CheckCircle(diameter=dp(24))
         self.check.bind(on_release=lambda *_a: self._toggle_complete())
+        self.check.pos_hint = {"center_y": 0.5}
         row.add_widget(self.check)
 
         self.title_label = Label(
@@ -220,6 +228,7 @@ class ChecklistItem(BoxLayout):
         self._rebuild_subtasks()
         self._card_bg.rgba = theme_rgba(CARD_PRIMARY)
         self._card_border_color.rgba = theme_rgba(BORDER)
+        self.expand_btn.icon_color = theme_rgba(TEXT_SECONDARY)
         self._update_card_canvas()
 
     def _refresh_main(self, *_args):
@@ -234,9 +243,11 @@ class ChecklistItem(BoxLayout):
 
         if not self.expanded:
             self.expand_btn.icon = "chevron-right"
+            self.expand_btn.icon_color = theme_rgba(TEXT_SECONDARY)
             return
 
         self.expand_btn.icon = "chevron-down"
+        self.expand_btn.icon_color = theme_rgba(ACCENT)
 
         for index, subtask in enumerate(self.subtasks):
             row = SubChecklistItem(
@@ -248,18 +259,28 @@ class ChecklistItem(BoxLayout):
             )
             self.subtask_container.add_widget(row)
 
+        add_row = BoxLayout(
+            orientation="horizontal",
+            size_hint_y=None,
+            height=dp(36),
+            padding=[_SUBITEM_INDENT, 0, dp(10), 0],
+        )
         self._add_subtask_input = TextInput(
             hint_text="Add a sub-item...",
             multiline=False,
             size_hint_y=None,
             height=dp(36),
-            padding=[dp(48), dp(8), dp(10), dp(8)],
+            padding=[0, dp(9), 0, dp(9)],
             background_color=(0, 0, 0, 0),
+            foreground_color=theme_rgba(TEXT_PRIMARY),
+            hint_text_color=theme_rgba(TEXT_SECONDARY),
+            cursor_color=theme_rgba(ACCENT),
         )
         self._add_subtask_input.bind(
             on_text_validate=lambda *_a: self._submit_new_subtask()
         )
-        self.subtask_container.add_widget(self._add_subtask_input)
+        add_row.add_widget(self._add_subtask_input)
+        self.subtask_container.add_widget(add_row)
 
     def _toggle_subtask(self, index, checked):
         updated = list(self.subtasks)

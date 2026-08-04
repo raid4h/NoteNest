@@ -165,7 +165,7 @@ class ChecklistDetailScreen(ThemedScreenMixin, MDScreen):
             currency_prefix = "$" if uses_currency else ""
             total_label.text = f"Total: {currency_prefix}{format_calculated_number(grand_total)}"
             total_label.texture_update()
-            total_label.height = total_label.texture_size[1] + dp(4)
+            total_label.height = total_label.texture_size[1] + dp(6)
 
     def _ensure_total_label(self):
         # Built once and cached -- inserted right under subtitle_label
@@ -186,6 +186,7 @@ class ChecklistDetailScreen(ThemedScreenMixin, MDScreen):
                 valign="middle",
                 size_hint_y=None,
                 height=0,
+                padding=(0, dp(2)),
             )
             label.bind(size=label.setter("text_size"))
             parent = self.ids.subtitle_label.parent
@@ -200,7 +201,7 @@ class ChecklistDetailScreen(ThemedScreenMixin, MDScreen):
             theme_text_color="Custom",
             text_color=theme_manager.get_color(TEXT_SECONDARY),
             size_hint_y=None,
-            height=dp(50),
+            height=dp(56),
         )
 
     # ── one item row: checkbox/title (ChecklistItem) + delete button ──
@@ -222,14 +223,23 @@ class ChecklistDetailScreen(ThemedScreenMixin, MDScreen):
         )
         item_widget.on_toggle_complete = lambda checked, iid=item["id"]: self._toggle_item(iid, checked)
 
-        row = BoxLayout(orientation="horizontal", size_hint_y=None, spacing=dp(2))
+        # Extra breathing room between the item card and its delete
+        # button, and a little right-side padding so the ✕ doesn't
+        # crowd the screen edge -- purely spacing, same widgets/logic.
+        row = BoxLayout(orientation="horizontal", size_hint_y=None, spacing=dp(6), padding=[0, 0, dp(4), 0])
         row.add_widget(item_widget)
 
         # AnchorLayout keeps the delete button pinned to the TOP of the
         # row regardless of how tall item_widget grows when its
         # sub-items are expanded -- a plain pos_hint on the button
         # alone would center it against the whole row's height instead.
-        delete_anchor = AnchorLayout(size_hint=(None, 1), width=dp(36), anchor_x="center", anchor_y="top")
+        # A small top padding nudges the ✕ down so its visual center
+        # lines up with the checkbox/title line instead of the card's
+        # bare top edge.
+        delete_anchor = AnchorLayout(
+            size_hint=(None, 1), width=dp(36), anchor_x="center", anchor_y="top",
+            padding=(0, dp(10), 0, 0),
+        )
         delete_btn = MDIconButton(
             icon="close",
             theme_icon_color="Custom",
@@ -271,32 +281,35 @@ class ChecklistDetailScreen(ThemedScreenMixin, MDScreen):
         row = BoxLayout(
             orientation="horizontal",
             size_hint_y=None,
-            height=dp(44),
+            height=dp(48),
             spacing=dp(10),
-            padding=[dp(14), 0, dp(10), 0],
+            padding=[dp(16), 0, dp(14), 0],
         )
 
         plus_label = Label(
             text="+",
-            font_size=sp(18),
+            font_size=sp(19),
             bold=True,
             color=theme_rgba(ACCENT),
             size_hint=(None, None),
-            size=(dp(20), dp(30)),
-            pos_hint={"center_y": 0.5},
+            size=(dp(20), dp(48)),
+            valign="middle",
+            halign="center",
         )
+        plus_label.bind(size=plus_label.setter("text_size"))
         row.add_widget(plus_label)
 
         self._new_item_input = TextInput(
             hint_text="Add another item",
             multiline=False,
             size_hint_y=None,
-            height=dp(38),
+            height=dp(40),
             background_color=(0, 0, 0, 0),
             foreground_color=theme_rgba(TEXT_PRIMARY),
             hint_text_color=theme_rgba(TEXT_SECONDARY),
             cursor_color=theme_rgba(ACCENT),
-            padding=[0, dp(9), 0, dp(9)],
+            font_size=sp(14.5),
+            padding=[0, dp(10), 0, dp(10)],
             pos_hint={"center_y": 0.5},
         )
         self._new_item_input.bind(on_text_validate=lambda *_a: self._submit_new_item())
@@ -317,19 +330,21 @@ class ChecklistDetailScreen(ThemedScreenMixin, MDScreen):
         row = _TappableRow(
             orientation="horizontal",
             size_hint_y=None,
-            height=dp(38),
+            height=dp(42),
             spacing=dp(8),
-            padding=[dp(12), 0, dp(10), 0],
+            padding=[dp(14), 0, dp(10), 0],
         )
 
         chevron = Label(
             text="\u25be" if self._checked_expanded else "\u25b8",
-            font_size=sp(13),
+            font_size=sp(14),
             color=theme_rgba(TEXT_SECONDARY),
             size_hint=(None, None),
-            size=(dp(18), dp(22)),
-            pos_hint={"center_y": 0.5},
+            size=(dp(18), dp(42)),
+            valign="middle",
+            halign="center",
         )
+        chevron.bind(size=chevron.setter("text_size"))
         row.add_widget(chevron)
 
         label = Label(
