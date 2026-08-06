@@ -37,7 +37,7 @@ version = 0.1
 # MUST stay in sync with the kivymd line in requirements.txt at the repo
 # root, which is what everyone installs locally for desktop development.
 # See requirements.txt for how to bump this pin.
-requirements = python3,kivy==2.3.1,kivymd==https://github.com/kivymd/KivyMD/archive/dbe8ad4619ae942e3485a8f8f5eff295c4cb1db7.zip,pillow==10.4.0,materialyoucolor==3.0.2,asynckivy==0.6.4,materialshapes==0.3,plyer==2.1.0
+requirements = python3,kivy==2.3.1,kivymd==https://github.com/kivymd/KivyMD/archive/dbe8ad4619ae942e3485a8f8f5eff295c4cb1db7.zip,pillow==10.4.0,materialyoucolor==3.0.3,asynckivy==0.6.4,materialshapes==0.3,plyer==2.1.0
 
 # (str) Presplash of the application
 # TODO(design): add assets/presplash.png (recommended 2048x2048, will be
