@@ -12,7 +12,7 @@ from plyer import filechooser
 
 from database.notes_queries import create_notes
 from database.attachment_queries import create_attachment, get_all_attachments, delete_attachment
-from screens.editor.paths import ATTACHMENTS_DIR, DEFAULT_NOTEBOOK_ID
+from screens.editor.paths import get_attachments_dir, DEFAULT_NOTEBOOK_ID
 from screens.editor.markup import IMAGE_TOKEN_PATTERN
 
 
@@ -47,10 +47,11 @@ class ImageAttachmentMixin:
             return
         original_path = selection[0]
 
-        os.makedirs(ATTACHMENTS_DIR, exist_ok=True)
+        attachments_dir = get_attachments_dir()
+        os.makedirs(attachments_dir, exist_ok=True)
         file_extension = os.path.splitext(original_path)[1]
         stored_filename = f"{uuid.uuid4().hex}{file_extension}"
-        stored_path = os.path.join(ATTACHMENTS_DIR, stored_filename)
+        stored_path = os.path.join(attachments_dir, stored_filename)
         shutil.copy2(original_path, stored_path)
 
         create_attachment(self.current_note_id, stored_path)

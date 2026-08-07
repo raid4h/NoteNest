@@ -13,7 +13,7 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.button import MDButton, MDButtonText
 from plyer import filechooser
 
-from screens.editor.paths import EXPORTS_DIR
+from screens.editor.paths import get_exports_dir
 from screens.editor.markup import strip_markers_for_export
 
 _INVALID_FILENAME_CHARS = re.compile(r'[\\/:*?"<>|]')
@@ -32,14 +32,15 @@ class ExportMixin:
         self._export_clean_content = strip_markers_for_export(self.ids.content_field.text)
 
         safe_title = self._sanitize_filename(title)
-        os.makedirs(EXPORTS_DIR, exist_ok=True)
+        exports_dir = get_exports_dir()
+        os.makedirs(exports_dir, exist_ok=True)
 
         self._cwd_before_export_picker = os.getcwd()
 
         filechooser.save_file(
             on_selection=self.on_export_location_selected,
             filters=[["Text files", "*.txt"]],
-            path=os.path.join(EXPORTS_DIR, f"{safe_title}.txt"),
+            path = os.path.join(exports_dir, f"{safe_title}.txt"),
         )
 
     def on_export_location_selected(self, selection):
