@@ -33,24 +33,24 @@ version = 0.1
 # (list) Application requirements
 # KivyMD has no stable 2.0 release on PyPI (this app relies on 2.0-only
 # APIs such as MDButton/MDButtonText), so it's pinned to an exact commit
-# on the master branch instead of a floating `kivymd` install -- this
-# MUST stay in sync with the kivymd line in requirements.txt at the repo
-# root, which is what everyone installs locally for desktop development.
-# See requirements.txt for how to bump this pin.
-requirements = python3,kivy==2.3.1,kivymd==https://github.com/kivymd/KivyMD/archive/dbe8ad4619ae942e3485a8f8f5eff295c4cb1db7.zip,pillow==10.4.0,materialyoucolor==3.0.3,asynckivy==0.6.4,materialshapes==0.3,plyer==2.1.0
+# via a bare GitHub zip URL (not kivymd==https://... -- that form makes
+# p4a write a broken requirements.txt that pip treats as a local path).
+# Keep the commit hash in sync with requirements.txt at the repo root.
+requirements = python3,kivy==2.3.1,https://github.com/kivymd/KivyMD/archive/dbe8ad4619ae942e3485a8f8f5eff295c4cb1db7.zip,pillow==10.4.0,materialyoucolor==3.0.3,asynckivy==0.6.4,materialshapes==0.3,plyer==2.1.0
 
 # (str) Presplash of the application
 # TODO(design): add assets/presplash.png (recommended 2048x2048, will be
 # letterboxed to fit every device aspect ratio). Build works without it
 # -- p4a falls back to a plain white splash -- but this path is where it
-# goes once it exists.
-presplash.filename = %(source.dir)s/assets/presplash.png
+# goes once it exists. Keep commented until the file is present; a
+# missing path makes packaging crash instead of using the fallback.
+#presplash.filename = %(source.dir)s/assets/presplash.png
 
 # (str) Icon of the application
 # TODO(design): add assets/icon.png (512x512 recommended). Build works
 # without it -- p4a falls back to the default Kivy icon -- but this path
-# is where it goes once it exists.
-icon.filename = %(source.dir)s/assets/icon.png
+# is where it goes once it exists. Keep commented until the file is present.
+#icon.filename = %(source.dir)s/assets/icon.png
 
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 # NoteNest's screens aren't built with a landscape layout, so lock to
@@ -61,15 +61,20 @@ orientation = portrait
 fullscreen = 0
 
 # (list) Permissions
-# - READ/WRITE_EXTERNAL_STORAGE: the manual backup export/import screen
+# - READ_EXTERNAL_STORAGE: the manual backup export/import screen
 #   (services/manual_export.py) lets the user pick an arbitrary save/load
-#   location via plyer's native file picker.
+#   location via plyer's native file picker. Capped at API 32 -- from
+#   API 33 Android splits this into per-media-type permissions.
+# - READ_MEDIA_IMAGES: the API 33+ replacement, needed for the file
+#   picker to actually see photos when attaching images to a note.
 # - POST_NOTIFICATIONS: required on Android 13+ (API 33+) for the
 #   reminder notifications sent from services/notification_service.py.
+# WRITE_EXTERNAL_STORAGE is deliberately omitted -- it is a no-op from
+# Android 11 (API 30) onward under scoped storage.
 # Note attachments and the app's own SQLite DB should live under
 # App.user_data_dir (private app storage), which needs no permission --
 # see the app-side compatibility workstream for that path migration.
-android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,POST_NOTIFICATIONS
+android.permissions = POST_NOTIFICATIONS,(name=android.permission.READ_MEDIA_IMAGES;maxSdkVersion=35),(name=android.permission.READ_EXTERNAL_STORAGE;maxSdkVersion=32)
 
 # (int) Target Android API, should be as high as possible.
 android.api = 35
@@ -81,7 +86,9 @@ android.minapi = 24
 android.ndk = 25b
 
 # (int) Android SDK build-tools version to use
-android.build_tools = 34.0.0
+# Must be >= android.api, otherwise the packaging step fails looking for
+# an aapt2/d8 that can compile API 35 resources.
+android.build_tools = 35.0.0
 
 # (list) The Android archs to build for
 # Covers essentially all real devices in active use; drop armeabi-v7a
@@ -93,6 +100,8 @@ android.archs = arm64-v8a,armeabi-v7a
 android.allow_backup = True
 
 # (str) The format used to package the app for release mode (aab or apk).
+# apk for sideloading and demo. Switch to aab only if the app is ever
+# uploaded to Google Play, which requires that format.
 android.release_artifact = apk
 
 # (str) The format used to package the app for debug mode (apk or aar).
